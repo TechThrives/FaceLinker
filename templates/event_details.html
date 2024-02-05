@@ -16,15 +16,14 @@ endblock %} {% block body %}
 
 <div class="text-center pb-8 mb-20">
   <h2 class="text-xl my-4 font-bold text-gray-900 sm:text-3xl">Your Uploads</h2>
-
   <div
-    class="m-4 grid grid-cols-1 gap-4 lg:grid-cols-5 md:grid-cols-3 lg:gap-8"
+    class="m-8 grid grid-cols-1 gap-4 lg:grid-cols-5 md:grid-cols-3 lg:gap-8"
   >
-    {% for x in range(16) %}
+    {% for image_file in image_files %}
     <img
-      class="h-auto max-w-full rounded-lg transition-all filter grayscale hover:grayscale-0"
-      src="https://flowbite.s3.amazonaws.com/docs/gallery/square/image-1.jpg"
-      alt="image"
+      class="h-auto max-w-full rounded-lg transition-all filter"
+      src="{{ url_for('static', filename=image_file) }}"
+      alt="{{ image_file }}"
     />
     {% endfor %}
   </div>

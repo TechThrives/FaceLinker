@@ -13,6 +13,7 @@ from flask_talisman import Talisman
 from flask_pymongo import PyMongo
 from flask_bcrypt import Bcrypt
 from flask_wtf.csrf import CSRFProtect
+from werkzeug.utils import secure_filename
 
 # Other modules
 from dotenv import load_dotenv
@@ -33,12 +34,27 @@ from verification import confirm_token
 
 load_dotenv()
 
-UPLOAD_FOLDER = "uploads"
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+UPLOAD_FOLDER = "static/uploads"
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def delete_folder(folder_path):
+    try:
+        for item in os.listdir(folder_path):
+            item_path = os.path.join(folder_path, item)
+
+            if os.path.isfile(item_path):
+                os.remove(item_path)
+            elif os.path.isdir(item_path):
+                delete_folder(item_path)
+
+        os.rmdir(folder_path)
+    except Exception as e:
+        print(f"Error deleting folder '{folder_path}': {e}")
 
 
 # Create app
@@ -209,6 +225,11 @@ def delete_event(event_id):
         users.update_one(
             {"id": current_user.id}, {"$pull": {"events": deleted_event["_id"]}}
         )
+        delete_folder(
+            os.path.join(
+                app.config["UPLOAD_FOLDER"], str(current_user.id), str(event_id)
+            )
+        )
         return redirect(url_for("events"))
 
     except Exception as e:
@@ -247,8 +268,20 @@ def view_event(event_id):
     events = mongo.db.events
     event = events.find_one({"id": event_id})
     event = Event.make_from_dict(event)
+    gallery_path = os.path.join(
+        app.config["UPLOAD_FOLDER"], str(current_user.id), str(event_id)
+    )
 
-    return render_template("event_details.html", event=event)
+    if not os.path.exists(gallery_path):
+        return render_template("event_details.html", event=event)
+
+    image_files = [
+        "uploads" + "/" + str(current_user.id) + "/" + str(event_id) + "/" + str(f)
+        for f in os.listdir(gallery_path)
+        if os.path.isfile(os.path.join(gallery_path, f))
+    ]
+
+    return render_template("event_details.html", event=event, image_files=image_files)
 
 
 @app.route("/upload/<event_id>", methods=["GET", "POST"])
@@ -261,22 +294,30 @@ def event_upload(event_id):
     if request.method == "POST":
 
         files = request.files.getlist("files")
-        print(request.files)
         for file in files:
             if file.filename == "":
                 continue
 
             if file and allowed_file(file.filename):
-                filename = file.filename
-                file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+                directory_path = os.path.join(
+                    app.config["UPLOAD_FOLDER"], str(current_user.id), str(event_id)
+                )
+
+                if not os.path.exists(directory_path):
+                    os.makedirs(directory_path)
+
+                filename = secure_filename(file.filename)
+                file_path = os.path.join(directory_path, filename)
+                file.save(file_path)
+
             else:
                 return render_template(
                     "event_upload.html", event=event, msg="Invalid file format"
                 )
 
-        return render_template(
-            "event_upload.html", event=event, msg="Files uploaded successfully"
-        )
+            return render_template(
+                "event_upload.html", event=event, msg="Files uploaded successfully"
+            )
 
     return render_template("event_upload.html", event=event)
 

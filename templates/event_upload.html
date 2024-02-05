@@ -2,14 +2,41 @@
 %} {% endblock %} {% block header %} {% include "layout/header.html "%} {%
 endblock %} {% block body %}
 <!-- component -->
-{{msg}}
-<div class="sm:px-8 md:px-16 sm:py-8">
+
+<div class="flex flex-col items-center sm:px-8 md:px-16 sm:py-8">
+  <div
+    id="toast-success"
+    class="flex text-center w-full max-w-xs p-4 mb-4 text-gray-500 bg-white rounded-lg shadow {% if not msg %} hidden {% endif %}"
+    role="alert"
+  >
+    <p class="text-sm mx-auto">{{msg}}</p>
+    <button
+      type="button"
+      class="ms-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex items-center justify-center h-8 w-8"
+      aria-label="Close"
+      id="close-toast"
+    >
+      <span class="sr-only">Close</span>
+      <svg
+        class="w-3 h-3"
+        aria-hidden="true"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 14 14"
+      >
+        <path
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
+        />
+      </svg>
+    </button>
+  </div>
   <main class="container mx-auto max-w-screen-lg h-full">
     <!-- file upload modal -->
-    <form
-      action="/upload/{{event.id}}"
-      method="post"
-      enctype="multipart/form-data"
+    <div
       aria-label="File Upload Modal"
       class="relative h-full flex flex-col bg-white shadow-xl rounded-md"
     >
@@ -22,7 +49,7 @@ endblock %} {% block body %}
           >
             <div class="flex flex-col items-center justify-center pt-5 pb-6">
               <svg
-                class="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400"
+                class="w-8 h-8 mb-4 text-gray-500"
                 aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -36,24 +63,32 @@ endblock %} {% block body %}
                   d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
                 />
               </svg>
-              <p class="mb-2 text-sm text-gray-500 dark:text-gray-400">
+              <p class="mb-2 text-sm text-gray-700">
                 <span class="font-semibold">Click to upload</span> or drag and
                 drop
               </p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">PNG, JPG</p>
+              <p class="text-xs text-gray-500">PNG, JPG</p>
             </div>
-            <input
-              id="dropzone-file"
-              type="file"
-              name="files"
-              multiple
-              class="hidden"
-              accept="image/png, image/jpeg"
-            />
+            <form id="imageForm" method="post" enctype="multipart/form-data">
+              <input
+                id="dropzone-file"
+                type="file"
+                name="files"
+                multiple
+                class="hidden"
+                accept="image/png, image/jpeg"
+              />
+              <input
+                type="hidden"
+                id="csrf_token"
+                name="csrf_token"
+                value="{{ csrf_token() }}"
+              />
+            </form>
           </label>
         </div>
 
-        <div id="selectedimages">
+        <div>
           <h1
             class="pt-8 pb-4 text-center font-semibold sm:text-lg text-gray-900 hover:cursor-default"
           >
@@ -79,25 +114,20 @@ endblock %} {% block body %}
 
       <!-- sticky footer -->
       <footer class="flex justify-end px-8 pb-8 pt-4">
-        <input
-          type="submit"
+        <button
+          id="submitForm"
           class="rounded-sm px-3 py-1 bg-blue-700 hover:bg-blue-500 text-white focus:shadow-outline focus:outline-none hover:cursor-pointer"
-          value="Upload"
-        />
-        <input
-          type="hidden"
-          id="csrf_token"
-          name="csrf_token"
-          value="{{ csrf_token() }}"
-        />
-        <div
+        >
+          Upload
+        </button>
+        <button
           id="resetForm"
           class="ml-3 rounded-sm px-3 py-1 hover:bg-gray-300 focus:shadow-outline focus:outline-none hover:cursor-pointer"
         >
           Reset
-        </div>
+        </button>
       </footer>
-    </form>
+    </div>
   </main>
 </div>
 
@@ -157,6 +187,17 @@ endblock %} {% block body %}
 </template>
 
 <script>
+  const closetoast = document.getElementById("close-toast"),
+    toast = document.getElementById("toast-success"),
+    gallery = document.getElementById("gallery"),
+    hidden = document.getElementById("dropzone-file"),
+    submitbtn = document.getElementById("submitForm"),
+    imageForm = document.getElementById("imageForm");
+
+  closetoast.onclick = (e) => {
+    toast.classList.add("hidden");
+  };
+
   const imageTempl = document.getElementById("image-template"),
     empty = document.getElementById("empty");
 
@@ -183,9 +224,13 @@ endblock %} {% block body %}
     }
   }
 
-  const gallery = document.getElementById("gallery");
-
-  const hidden = document.getElementById("dropzone-file");
+  submitbtn.onclick = (e) => {
+    if (hidden.files.length == 0) {
+      alert("No files selected");
+    } else {
+      imageForm.submit();
+    }
+  };
 
   hidden.onchange = (e) => {
     while (gallery.firstChild) {
