@@ -1,0 +1,119 @@
+{% extends "base.html" %} {% block sidebar %} {% include "layout/sidebar.html"
+%} {% endblock %} {% block header %} {% include "layout/header.html "%} {%
+endblock %} {% block body %}
+<div class="justify-center items-center text-center">
+  <div
+    class="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12"
+  >
+    <div class="relative py-3 sm:max-w-xl sm:mx-auto">
+      <div
+        class="relative px-4 py-10 bg-white mx-8 md:mx-0 shadow rounded-3xl sm:p-10"
+      >
+        <div class="max-w-md mx-auto">
+          <div class="flex items-center space-x-5">
+            <div
+              class="h-14 w-14 bg-yellow-200 rounded-full flex flex-shrink-0 justify-center items-center text-yellow-500 text-2xl font-mono"
+            >
+              i
+            </div>
+            <div
+              class="block pl-2 font-semibold text-xl self-start text-gray-700"
+            >
+              <h2 class="leading-relaxed">Create an Event</h2>
+              <p class="text-sm text-gray-500 font-normal leading-relaxed">
+                Lorem ipsum, dolor sit amet consectetur adipisicing elit.
+              </p>
+            </div>
+          </div>
+          <form
+            class="divide-y divide-gray-200"
+            method="POST"
+            action="{{ url_for('addevents') }}"
+          >
+            <div
+              class="py-8 text-base leading-6 space-y-4 text-gray-700 sm:text-lg sm:leading-7"
+            >
+              <div class="flex flex-col">
+                <label class="mb-2 text-base font-medium leading-6"
+                  >Event Title</label
+                >
+                <input
+                  type="text"
+                  name="etitle"
+                  class="px-4 py-2 border focus:ring-gray-500 focus:border-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600"
+                  placeholder="Event title"
+                />
+              </div>
+              <div class="flex flex-col">
+                <label class="mb-2 text-base font-medium leading-6"
+                  >Event Location</label
+                >
+                <input
+                  type="text"
+                  name="elocation"
+                  class="px-4 py-2 border focus:ring-gray-500 focus:border-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600"
+                  placeholder="Optional"
+                />
+              </div>
+              <div class="flex justify-between flex-wrap">
+                <div class="flex grow flex-col mx-2">
+                  <label class="mb-2 text-base font-medium">Start Date</label>
+                  <div class="focus-within:text-gray-600 text-gray-400">
+                    <input
+                      type="date"
+                      name="estart_date"
+                      class="px-4 py-2 pl-10 border focus:ring-gray-500 focus:border-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600"
+                      placeholder="25/02/2020"
+                    />
+                  </div>
+                </div>
+                <div class="flex grow flex-col mx-2">
+                  <label class="mb-2 text-base font-medium">End Date</label>
+                  <div class="focus-within:text-gray-600 text-gray-400">
+                    <input
+                      type="date"
+                      name="eend_date"
+                      class="px-4 py-2 pl-10 border focus:ring-gray-500 focus:border-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600"
+                      placeholder="26/02/2020"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div class="flex flex-col">
+                <label class="mb-2 text-base font-medium leading-6"
+                  >Event Description</label
+                >
+                <textarea
+                  type="text"
+                  rows="4"
+                  name="edesc"
+                  class="px-4 py-2 border focus:ring-gray-500 focus:border-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600"
+                  placeholder="Optional"
+                ></textarea>
+              </div>
+            </div>
+            <div class="pt-4 flex items-center space-x-4">
+              <input
+                type="hidden"
+                id="csrf_token"
+                name="csrf_token"
+                value="{{ csrf_token() }}"
+              />
+              <input
+                type="submit"
+                value="Create"
+                class="py-2 px-4 text-center bg-indigo-600 rounded-md w-full text-white text-sm hover:bg-indigo-500"
+              />
+            </div>
+          </form>
+          {% if msg == "1" %}
+          <p class="mt-4 text-base text-indigo-600 text-center">
+            Event Created Successfully.
+          </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
