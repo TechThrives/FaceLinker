@@ -44,15 +44,16 @@ def allowed_file(filename):
 
 def delete_folder(folder_path):
     try:
-        for item in os.listdir(folder_path):
-            item_path = os.path.join(folder_path, item)
+        if os.path.exists(folder_path):
+            for item in os.listdir(folder_path):
+                item_path = os.path.join(folder_path, item)
 
-            if os.path.isfile(item_path):
-                os.remove(item_path)
-            elif os.path.isdir(item_path):
-                delete_folder(item_path)
+                if os.path.isfile(item_path):
+                    os.remove(item_path)
+                elif os.path.isdir(item_path):
+                    delete_folder(item_path)
 
-        os.rmdir(folder_path)
+            os.rmdir(folder_path)
     except Exception as e:
         print(f"Error deleting folder '{folder_path}': {e}")
 
@@ -115,7 +116,7 @@ def login():
             # Redirect to index if already authenticated
             return redirect(url_for("dashboard"))
         # Render login page
-        return render_template("login.html", error=request.args.get("error"))
+        return render_template("login.html")
 
     if request.method == "POST":
         # Retrieve user from database
@@ -137,7 +138,10 @@ def login():
                 return redirect(next or url_for("dashboard"))
 
         # Redirect to login page on error
-        return redirect(url_for("login", error=1))
+        return render_template(
+            "login.html",
+            error="Incorrect email address or password. Please try again.",
+        )
 
 
 # Register
@@ -175,10 +179,17 @@ def register():
                 return redirect(url_for("login"))
             else:
                 # Handle database error
-                return redirect(url_for("register", error=2))
+                return render_template(
+                    "register.html",
+                    error="There was an error. You have not been registered.<br />Please contact support.",
+                )
 
         # Handle duplicate email
-        return redirect(url_for("register", error=1))
+
+        return render_template(
+            "register.html",
+            error="That email address is already in use. Please login or contact support if you have forgotten your login details.",
+        )
 
 
 @app.route("/dashboard")
@@ -191,7 +202,7 @@ def dashboard():
 @login_required
 def addevents():
     if request.method == "GET":
-        return render_template("addevents.html", msg=request.args.get("msg"))
+        return render_template("addevents.html")
     if request.method == "POST":
         # Trim input data
         etitle = request.form["etitle"].strip()
@@ -209,18 +220,15 @@ def addevents():
             {"id": current_user.id}, {"$push": {"events": inserted_event.inserted_id}}
         )
 
-        return redirect(url_for("addevents", msg=1))
+        return render_template("addevents.html", msg="Event Created Successfully.")
 
 
 @app.route("/delete_event/<event_id>", methods=["POST"])
 @login_required
 def delete_event(event_id):
     try:
-        # Delete the event from the events collection
         events = mongo.db.events
         deleted_event = events.find_one_and_delete({"id": event_id})
-        # Remove the event reference from the user's events array
-        print(deleted_event)
         users = mongo.db.users
         users.update_one(
             {"id": current_user.id}, {"$pull": {"events": deleted_event["_id"]}}
@@ -233,7 +241,6 @@ def delete_event(event_id):
         return redirect(url_for("events"))
 
     except Exception as e:
-        # Handle any exceptions, such as invalid ObjectId or other errors
         print(f"Error deleting event: {e}")
         return redirect(url_for("events"))
 
@@ -292,20 +299,20 @@ def event_upload(event_id):
     event = Event.make_from_dict(event)
 
     if request.method == "POST":
+        directory_path = os.path.join(
+            app.config["UPLOAD_FOLDER"], str(current_user.id), str(event_id)
+        )
+
+        if not os.path.exists(directory_path):
+            os.makedirs(directory_path)
 
         files = request.files.getlist("files")
+
         for file in files:
             if file.filename == "":
                 continue
 
             if file and allowed_file(file.filename):
-                directory_path = os.path.join(
-                    app.config["UPLOAD_FOLDER"], str(current_user.id), str(event_id)
-                )
-
-                if not os.path.exists(directory_path):
-                    os.makedirs(directory_path)
-
                 filename = secure_filename(file.filename)
                 file_path = os.path.join(directory_path, filename)
                 file.save(file_path)
@@ -315,9 +322,9 @@ def event_upload(event_id):
                     "event_upload.html", event=event, msg="Invalid file format"
                 )
 
-            return render_template(
-                "event_upload.html", event=event, msg="Files uploaded successfully"
-            )
+        return render_template(
+            "event_upload.html", event=event, msg="Files uploaded successfully"
+        )
 
     return render_template("event_upload.html", event=event)
 
@@ -386,6 +393,7 @@ def delete_account():
     ):
         messages_deleted = True
 
+    delete_folder(os.path.join(app.config["UPLOAD_FOLDER"], str(user_id)))
     return {
         "user_deleted": user_deleted,
         "notes_deleted": notes_deleted,

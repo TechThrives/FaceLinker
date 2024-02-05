@@ -12,20 +12,65 @@ endblock %} {% block body %}
       <p>End Date :{{event.end}}</p>
     </div>
   </div>
-</div>
 
-<div class="text-center pb-8 mb-20">
-  <h2 class="text-xl my-4 font-bold text-gray-900 sm:text-3xl">Your Uploads</h2>
-  <div
-    class="m-8 grid grid-cols-1 gap-4 lg:grid-cols-5 md:grid-cols-3 lg:gap-8"
-  >
-    {% for image_file in image_files %}
-    <img
-      class="h-auto max-w-full rounded-lg transition-all filter"
-      src="{{ url_for('static', filename=image_file) }}"
-      alt="{{ image_file }}"
-    />
-    {% endfor %}
+  <div class="text-center pb-8">
+    <h2 class="text-xl my-4 font-bold text-gray-900 sm:text-3xl">
+      Your Uploads
+    </h2>
+    <div
+      id="imageGallery"
+      class="m-8 grid grid-cols-3 gap-4 lg:grid-cols-5 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7"
+    >
+      {% for image_file in image_files %}
+      <div class="overflow-hidden rounded-lg">
+        <img
+          class="h-48 max-w-full sm:w-48 lg:w-96 xl:h-40 rounded-lg hover:scale-110 transition-shadow hover:shadow-2x hover:cursor-zoom-in"
+          src="{{ url_for('static', filename=image_file) }}"
+          alt="Image"
+        />
+      </div>
+      {% endfor %}
+    </div>
+    <div class="fixed bottom-8 right-1 transform -translate-x-1/2">
+      <a
+        class="text-white font-bold py-2 px-4 shadow-lg bg-indigo-600 rounded-md w-full text-md hover:bg-indigo-500"
+        href="{{ url_for('event_upload', event_id=event.id) }}"
+      >
+        Add Images
+      </a>
+    </div>
   </div>
 </div>
+
+<div
+  id="modal"
+  class="hidden fixed top-0 left-0 z-80 w-screen h-screen bg-black/70 flex justify-center items-center"
+>
+  <!-- The close button -->
+  <a
+    class="fixed z-90 top-6 right-8 text-white text-5xl font-bold"
+    href="javascript:void(0)"
+    onclick="closeModal()"
+    >&times;</a
+  >
+
+  <!-- A big image will be displayed here -->
+  <img id="modal-img" class="max-w-[800px] max-h-[600px] object-cover" />
+</div>
+
+<script>
+  // Get the modal by id
+  const modal = document.getElementById("modal"),
+    modalImg = document.getElementById("modal-img");
+  var imageGallery = document.getElementById("imageGallery");
+
+  imageGallery.onclick = ({ target }) => {
+    modal.classList.remove("hidden");
+    modalImg.src = target.src;
+  };
+
+  function closeModal() {
+    modal.classList.add("hidden");
+  }
+</script>
 {% endblock %}

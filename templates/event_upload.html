@@ -192,14 +192,13 @@ endblock %} {% block body %}
     gallery = document.getElementById("gallery"),
     hidden = document.getElementById("dropzone-file"),
     submitbtn = document.getElementById("submitForm"),
-    imageForm = document.getElementById("imageForm");
+    imageForm = document.getElementById("imageForm"),
+    imageTempl = document.getElementById("image-template"),
+    empty = document.getElementById("empty");
 
   closetoast.onclick = (e) => {
     toast.classList.add("hidden");
   };
-
-  const imageTempl = document.getElementById("image-template"),
-    empty = document.getElementById("empty");
 
   function addFile(target, file) {
     const isImage = file.type.match(/^image\/(jpeg|png)$/);

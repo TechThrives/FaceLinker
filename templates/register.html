@@ -117,22 +117,8 @@
       </div>
     </form>
 
-    {% if error == "1" %}
-    <p class="mt-4 text-sm text-red-600 text-center">
-      That email address is already in use. Please
-      <a
-        href="{{ url_for('login') }}"
-        class="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
-        title="login"
-        >login</a
-      >
-      or contact support if you have forgotten your login details.
-    </p>
-    {% elif error == "2" %}
-    <p class="mt-4 text-sm text-red-600 text-center">
-      There was an error. You have not been registered.<br />Please contact
-      support.
-    </p>
+    {% if error %}
+    <p class="mt-4 text-sm text-red-600 text-center">{{ error }}</p>
     {% endif %}
 
     <div class="mt-3">

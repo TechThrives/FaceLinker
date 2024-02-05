@@ -60,11 +60,8 @@
       </div>
     </form>
 
-    {% if error == "1" %}
-    <p class="mt-4 text-sm text-red-600 text-center">
-      Incorrect email address or password.<br />
-      Please try again.
-    </p>
+    {% if error %}
+    <p class="mt-4 text-sm text-red-600 text-center">{{error}}</p>
     {% endif %}
 
     <div class="mt-3">
