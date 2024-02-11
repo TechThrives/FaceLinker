@@ -39,8 +39,8 @@
 
   <nav class="mt-10">
     <a
-      class="flex items-center px-6 py-2 mt-4 text-gray-100 bg-gray-700 bg-opacity-25"
-      href="/"
+      class="flex items-center px-6 py-2 mt-4 {{ 'bg-gray-700 bg-opacity-25 text-gray-100' if active_page == 'dashboard' else 'text-gray-500' }} hover:bg-gray-700 hover:bg-opacity-25 hover:text-gray-100"
+      href="/dashboard"
     >
       <svg
         class="w-6 h-6"
@@ -67,7 +67,7 @@
     </a>
 
     <a
-      class="flex items-center px-6 py-2 mt-4 text-gray-500 hover:bg-gray-700 hover:bg-opacity-25 hover:text-gray-100"
+      class="flex items-center px-6 py-2 mt-4 {{ 'bg-gray-700 bg-opacity-25 text-gray-100' if active_page == 'eventadd' else 'text-gray-500' }} hover:bg-gray-700 hover:bg-opacity-25 hover:text-gray-100"
       href="/addevents"
     >
       <svg
@@ -89,7 +89,7 @@
     </a>
 
     <a
-      class="flex items-center px-6 py-2 mt-4 text-gray-500 hover:bg-gray-700 hover:bg-opacity-25 hover:text-gray-100"
+      class="flex items-center px-6 py-2 mt-4 {{ 'bg-gray-700 bg-opacity-25 text-gray-100' if active_page == 'event' else 'text-gray-500' }} hover:bg-gray-700 hover:bg-opacity-25 hover:text-gray-100"
       href="/events"
     >
       <svg
@@ -111,7 +111,7 @@
     </a>
 
     <a
-      class="flex items-center px-6 py-2 mt-4 text-gray-500 hover:bg-gray-700 hover:bg-opacity-25 hover:text-gray-100"
+      class="flex items-center px-6 py-2 mt-4 {{ 'bg-gray-700 bg-opacity-25 text-gray-100' if active_page == 'eventdetails' else 'text-gray-500' }} hover:bg-gray-700 hover:bg-opacity-25 hover:text-gray-100"
       href="/forms"
     >
       <svg

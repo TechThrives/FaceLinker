@@ -84,7 +84,10 @@ csp = {
         "'unsafe-inline'",
         "'unsafe-eval'",
     ],
-    "img-src": ["*", "worker-src blob:"],
+    "img-src": [
+        "*",
+    ],
+    "worker-src": ["blob:"],
 }
 talisman = Talisman(app, content_security_policy=csp)
 
@@ -202,7 +205,7 @@ def dashboard():
 @login_required
 def addevents():
     if request.method == "GET":
-        return render_template("addevents.html")
+        return render_template("event_add.html")
     if request.method == "POST":
         # Trim input data
         etitle = request.form["etitle"].strip()
@@ -220,7 +223,7 @@ def addevents():
             {"id": current_user.id}, {"$push": {"events": inserted_event.inserted_id}}
         )
 
-        return render_template("addevents.html", msg="Event Created Successfully.")
+        return render_template("event_add.html", msg="Event Created Successfully.")
 
 
 @app.route("/delete_event/<event_id>", methods=["POST"])

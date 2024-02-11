@@ -1,6 +1,6 @@
-{% extends "base.html" %} {% block sidebar %} {% include "layout/sidebar.html"
-%} {% endblock %} {% block header %} {% include "layout/header.html "%} {%
-endblock %} {% block body %}
+{% set active_page = "event" %}{% extends "base.html" %} {% block sidebar %} {%
+include "layout/sidebar.html" %} {% endblock %} {% block header %} {% include
+"layout/header.html "%} {% endblock %} {% block body %}
 <div class="mx-auto max-w-screen-xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
   <div class="text-center">
     <h2 class="text-xl font-bold text-gray-900 sm:text-3xl">{{event.title}}</h2>
@@ -24,7 +24,7 @@ endblock %} {% block body %}
       {% for image_file in image_files %}
       <div class="overflow-hidden rounded-lg">
         <img
-          class="h-48 max-w-full sm:w-48 lg:w-96 xl:h-40 rounded-lg hover:scale-110 transition-shadow hover:shadow-2x hover:cursor-zoom-in"
+          class="h-48 max-w-full sm:w-48 lg:w-96 xl:h-40 rounded-lg hover:scale-110 transition ease-in-out hover:shadow-2x hover:cursor-zoom-in"
           src="{{ url_for('static', filename=image_file) }}"
           alt="Image"
         />
