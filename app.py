@@ -102,6 +102,33 @@ login_manager.anonymous_user = Anonymous
 login_manager.login_view = "login"
 
 
+# Define a context processor function
+@app.context_processor
+def utility_processor():
+    def get_events():
+        user_events = mongo.db.users.aggregate(
+            [
+                {"$match": {"id": current_user.id}},
+                {
+                    "$lookup": {
+                        "from": "events",
+                        "localField": "events",
+                        "foreignField": "_id",
+                        "as": "eventDetails",
+                    }
+                },
+                {"$project": {"eventDetails._id": 0}},
+            ]
+        )
+
+        user_events_details = (
+            list(user_events)[0]["eventDetails"] if user_events else []
+        )
+        return user_events_details
+
+    return dict(get_events=get_events)
+
+
 # ROUTES
 
 
@@ -251,25 +278,7 @@ def delete_event(event_id):
 @app.route("/events")
 @login_required
 def events():
-    users = mongo.db.users
-    events = users.find_one({"id": current_user.id})
-    user_events = mongo.db.users.aggregate(
-        [
-            {"$match": {"id": current_user.id}},
-            {
-                "$lookup": {
-                    "from": "events",
-                    "localField": "events",
-                    "foreignField": "_id",
-                    "as": "eventDetails",
-                }
-            },
-            {"$project": {"eventDetails._id": 0}},
-        ]
-    )
-
-    user_events_details = list(user_events)[0]["eventDetails"] if user_events else []
-    return render_template("events.html", user_events=user_events_details)
+    return render_template("events.html")
 
 
 @app.route("/event/<event_id>", methods=["POST", "GET"])
