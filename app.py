@@ -30,6 +30,8 @@ from event import Event
 from message import Message
 from note import Note
 from verification import confirm_token
+from utils import delete_folder
+from deepface_function import extract_faces_and_compare, update_faces_collection
 
 
 load_dotenv()
@@ -40,22 +42,6 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-def delete_folder(folder_path):
-    try:
-        if os.path.exists(folder_path):
-            for item in os.listdir(folder_path):
-                item_path = os.path.join(folder_path, item)
-
-                if os.path.isfile(item_path):
-                    os.remove(item_path)
-                elif os.path.isdir(item_path):
-                    delete_folder(item_path)
-
-            os.rmdir(folder_path)
-    except Exception as e:
-        print(f"Error deleting folder '{folder_path}': {e}")
 
 
 # Create app
@@ -86,6 +72,7 @@ csp = {
     ],
     "img-src": [
         "*",
+        "worker-src blob:",
     ],
     "worker-src": ["blob:"],
 }
@@ -286,21 +273,26 @@ def events():
 def view_event(event_id):
     events = mongo.db.events
     event = events.find_one({"id": event_id})
-    event = Event.make_from_dict(event)
-    gallery_path = os.path.join(
-        app.config["UPLOAD_FOLDER"], str(current_user.id), str(event_id)
-    )
+    if event:
+        event = Event.make_from_dict(event)
+        gallery_path = os.path.join(
+            app.config["UPLOAD_FOLDER"], str(current_user.id), str(event_id)
+        )
 
-    if not os.path.exists(gallery_path):
-        return render_template("event_details.html", event=event)
+        if not os.path.exists(gallery_path):
+            return render_template("event_details.html", event=event)
 
-    image_files = [
-        "uploads" + "/" + str(current_user.id) + "/" + str(event_id) + "/" + str(f)
-        for f in os.listdir(gallery_path)
-        if os.path.isfile(os.path.join(gallery_path, f))
-    ]
+        image_files = [
+            "uploads" + "/" + str(current_user.id) + "/" + str(event_id) + "/" + str(f)
+            for f in os.listdir(gallery_path)
+            if os.path.isfile(os.path.join(gallery_path, f))
+        ]
 
-    return render_template("event_details.html", event=event, image_files=image_files)
+        return render_template(
+            "event_details.html", event=event, image_files=image_files
+        )
+
+    return redirect(url_for("dashboard"))
 
 
 @app.route("/upload/<event_id>", methods=["GET", "POST"])
@@ -308,37 +300,48 @@ def view_event(event_id):
 def event_upload(event_id):
     events = mongo.db.events
     event = events.find_one({"id": event_id})
-    event = Event.make_from_dict(event)
+    if event:
+        event = Event.make_from_dict(event)
 
-    if request.method == "POST":
-        directory_path = os.path.join(
-            app.config["UPLOAD_FOLDER"], str(current_user.id), str(event_id)
-        )
+        if request.method == "POST":
+            event_path = os.path.join(
+                app.config["UPLOAD_FOLDER"], str(current_user.id), str(event_id)
+            )
 
-        if not os.path.exists(directory_path):
-            os.makedirs(directory_path)
+            facelib_path = os.path.join(
+                app.config["UPLOAD_FOLDER"],
+                str(current_user.id),
+                str(event_id),
+                "faces/",
+            )
 
-        files = request.files.getlist("files")
+            os.makedirs(facelib_path, exist_ok=True)
 
-        for file in files:
-            if file.filename == "":
-                continue
+            files = request.files.getlist("files")
 
-            if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                file_path = os.path.join(directory_path, filename)
-                file.save(file_path)
+            for file in files:
+                if file.filename == "":
+                    continue
 
-            else:
-                return render_template(
-                    "event_upload.html", event=event, msg="Invalid file format"
-                )
+                if file and allowed_file(file.filename):
+                    filename = secure_filename(file.filename)
+                    file_path = os.path.join(event_path, filename)
+                    file.save(file_path)
+                    results = extract_faces_and_compare(file_path, facelib_path)
+                    update_faces_collection(mongo, results, event_id)
 
-        return render_template(
-            "event_upload.html", event=event, msg="Files uploaded successfully"
-        )
+                else:
+                    return render_template(
+                        "event_upload.html", event=event, msg="Invalid file format"
+                    )
 
-    return render_template("event_upload.html", event=event)
+            return render_template(
+                "event_upload.html", event=event, msg="Files uploaded successfully"
+            )
+
+        return render_template("event_upload.html", event=event)
+
+    return redirect(url_for("dashboard"))
 
 
 @app.route("/faces")

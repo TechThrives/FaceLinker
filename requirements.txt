@@ -8,3 +8,6 @@ dnspython
 configparser
 itsdangerous
 python-dotenv
+deepface
+opencv-python
+numpy
