@@ -60,6 +60,10 @@ def update_faces_collection(mongo, results, event_id):
                 "id": face_id,
                 "name": "unknown",
                 "images": [image_path],
-                "event_id": event_id,
             }
-            faces.insert_one(new_face)
+            inserted_face = faces.insert_one(new_face)
+
+            events = mongo.db.events
+            events.update_one(
+                {"id": event_id}, {"$push": {"faces": inserted_face.inserted_id}}
+            )

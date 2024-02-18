@@ -255,6 +255,12 @@ def delete_event(event_id):
                 app.config["UPLOAD_FOLDER"], str(current_user.id), str(event_id)
             )
         )
+
+        faces = mongo.db.faces
+        face_ids = deleted_event["faces"]
+        for face_id in face_ids:
+            faces.find_one_and_delete({"_id": face_id})
+
         return redirect(url_for("events"))
 
     except Exception as e:
