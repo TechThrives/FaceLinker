@@ -350,10 +350,32 @@ def event_upload(event_id):
     return redirect(url_for("dashboard"))
 
 
-@app.route("/faces")
+@app.route("/faces/<event_id>")
 @login_required
-def faces():
-    return render_template("faces.html")
+def faces(event_id):
+    faces = mongo.db.faces
+    face_path = os.path.join(
+        app.config["UPLOAD_FOLDER"], str(current_user.id), str(event_id), "faces"
+    )
+    if not os.path.exists(face_path):
+        return render_template("faces.html")
+
+    image_files = {}
+    for f in os.listdir(face_path):
+        if os.path.isfile(os.path.join(face_path, f)):
+            face_object = faces.find_one({"id": f.split(".")[0]})
+            image_files[f.split(".")[0]] = [
+                "uploads"
+                + "/"
+                + str(current_user.id)
+                + "/"
+                + str(event_id)
+                + "/faces/"
+                + str(f),
+                face_object,
+            ]
+
+    return render_template("faces.html", image_files=image_files)
 
 
 # Profile
