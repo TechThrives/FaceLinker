@@ -1,43 +1,51 @@
 {% set active_page = "event" %}{% extends "base.html" %} {% block sidebar %} {%
 include "layout/sidebar.html" %} {% endblock %} {% block header %} {% include
 "layout/header.html "%} {% endblock %} {% block body %}
-<div class="mx-auto max-w-screen-xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-  <div class="text-center">
-    <h2 class="text-xl font-bold text-gray-900 sm:text-3xl">{{event.title}}</h2>
-
-    <div class="flex-col mx-auto mt-4 max-w-md text-gray-800">
-      <p class="text-lg font-bold">{{event.location}}</p>
-      <p class="py-1 text-sm">{{event.desc}}</p>
-      <p>Start Date :{{event.start}}</p>
-      <p>End Date :{{event.end}}</p>
-    </div>
-  </div>
-
-  <div class="text-center pb-8">
-    <h2 class="text-xl my-4 font-bold text-gray-900 sm:text-3xl">
-      Your Uploads
-    </h2>
+<div class="flex flex-wrap -mx-3 mb-5">
+  <div class="w-full max-w-full px-3 mb-6 mx-auto">
     <div
-      id="imageGallery"
-      class="m-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+      class="relative flex-[1_auto] flex flex-col break-words min-w-0 bg-clip-border rounded-xl border border-dashed border-stone-200 bg-white m-5"
     >
-      {% for image_file in image_files %}
-      <div class="overflow-hidden rounded-lg">
-        <img
-          class="h-48 max-w-full sm:w-48 lg:w-96 xl:h-40 rounded-lg hover:scale-110 transition ease-in-out hover:shadow-2x hover:cursor-zoom-in"
-          src="{{ url_for('static', filename=image_file) }}"
-          alt="Image"
-        />
+      <div class="flex-col mx-auto mt-4 max-w-md text-gray-800">
+        <h2 class="text-xl font-bold text-gray-900 sm:text-3xl">
+          {{event.title}}
+        </h2>
+        <p class="text-lg font-bold">{{event.location}}</p>
+        <p class="py-1 text-sm">{{event.desc}}</p>
+        <p>Start Date :{{event.start}}</p>
+        <p>End Date :{{event.end}}</p>
       </div>
-      {% endfor %}
-    </div>
-    <div class="fixed bottom-8 right-1 transform -translate-x-1/2">
-      <a
-        class="text-white font-bold py-2 px-4 shadow-lg bg-indigo-600 rounded-md w-full text-md hover:bg-indigo-500"
-        href="{{ url_for('event_upload', event_id=event.id) }}"
-      >
-        Add Images
-      </a>
+
+      <div class="text-center pb-8">
+        <h2 class="text-xl my-4 font-bold text-gray-900 sm:text-3xl">
+          Your Uploads
+        </h2>
+        <div class="p-5 sm:p-8">
+          <div
+            id="imageGallery"
+            class="columns-2 gap-3 sm:columns-2 sm:gap-8 md:columns-3 lg:columns-4 xl:columns-5 [&>div:not(:first-child)]:mt-8"
+          >
+            {% for image_file in image_files %}
+            <div class="overflow-hidden rounded-lg">
+              <img
+                class="h-auto max-w-full rounded-lg hover:scale-110 transition ease-in-out hover:shadow-2x hover:cursor-zoom-in"
+                src="{{ url_for('static', filename=image_file) }}"
+                alt="Image"
+              />
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="fixed bottom-8 right-1 transform -translate-x-1/2">
+          <a
+            class="text-white font-bold py-2 px-4 shadow-lg bg-indigo-600 rounded-md w-full text-md hover:bg-indigo-500"
+            href="{{ url_for('event_upload', event_id=event.id) }}"
+          >
+            Add Images
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 </div>

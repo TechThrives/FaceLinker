@@ -4,15 +4,13 @@
 <div class="flex flex-wrap -mx-3 mb-5">
   <div class="w-full max-w-full px-3 mb-6 mx-auto">
     <div
-      class="relative flex-[1_auto] flex flex-col break-words min-w-0 bg-clip-border rounded-[.95rem] border border-dashed border-stone-200 bg-white m-5"
+      class="relative flex-[1_auto] flex flex-col break-words min-w-0 bg-clip-border rounded-xl border border-dashed border-stone-200 bg-white m-5"
     >
       <!-- card body  -->
-      <div class="flex-auto block py-8 px-9">
+      <div class="flex-col mx-auto text-center block py-8 px-9">
         <div>
           <div class="mb-9">
-            <h1 class="mb-2 text-[1.75rem] font-semibold text-dark">
-              Event Faces
-            </h1>
+            <h1 class="mb-2 text-[1.75rem] font-semibold text-dark">Faces</h1>
             <span class="text-[1.15rem] font-medium text-muted">
               Meet our talented team, a dynamic group of experts driven by
               passion and innovation.
@@ -21,9 +19,9 @@
           <div class="flex flex-wrap w-full">
             {% for id, image_file in image_files.items() %}
             <div class="flex flex-col mr-5 text-center mb-11 lg:mr-16">
-              <div class="inline-block mb-4 relative shrink-0 rounded-[.95rem]">
+              <div class="inline-block mb-4 relative shrink-0 rounded-lg">
                 <img
-                  class="inline-block shrink-0 rounded-[.95rem] w-[150px] h-[150px]"
+                  class="inline-block shrink-0 rounded-lg w-32 h-32"
                   src="{{ url_for('static', filename=image_file[0]) }}"
                   alt="face image"
                 />
