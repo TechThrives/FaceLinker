@@ -19,7 +19,7 @@ include "layout/sidebar.html" %} {% endblock %} {% block header %} {% include
             <div class="overflow-hidden rounded-lg">
               <img
                 class="h-auto max-w-full rounded-lg hover:scale-110 transition ease-in-out hover:shadow-2x hover:cursor-zoom-in"
-                src="{{ url_for('static', filename=image_file.image_path) }}"
+                src="{{ image_file.image_path }}"
                 alt="Image"
               />
               <input hidden type="text" value="{{image_file.coordinates}}" />

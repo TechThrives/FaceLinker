@@ -21,7 +21,7 @@ include "layout/sidebar.html" %} {% endblock %} {% block header %} {% include
               <div class="inline-block mb-4 relative shrink-0 rounded-lg">
                 <img
                   class="inline-block shrink-0 rounded-lg w-32 h-32"
-                  src="{{ url_for('static', filename=image_file.image_path) }}"
+                  src="{{ image_file.image_path }}"
                   alt="face image"
                 />
               </div>

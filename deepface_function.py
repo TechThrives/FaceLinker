@@ -3,47 +3,47 @@ from deepface import DeepFace
 import uuid
 import os
 
+import numpy as np
+from supabase_function import download_image, list_images, upload_image
 
-def face_compare(src_img, facelib_path):
 
-    all_files = os.listdir(facelib_path)
-
-    image_files = [file for file in all_files if file.lower().endswith((".png"))]
-
+def face_compare(src_img, folder_path):
+    image_files = list_images(folder_path)
     for image_file in image_files:
-        image_file_path = os.path.join(facelib_path, image_file)
+        target_img = download_image(image_file)
 
-        exist = DeepFace.verify(src_img, image_file_path)["verified"]
+        exist = DeepFace.verify(src_img, target_img)["verified"]
         if exist:
-            img_id = image_file.split(".")[0]
+            img_id = os.path.basename(image_file).split(".")[0]
             return True, img_id
-        else:
-            continue
+
     img_id = uuid.uuid4().hex[:10]
-    img_path = str(f"{facelib_path}{img_id}.png")
-    cv2.imwrite(img_path, src_img)
+    img_path = f"{folder_path}/{img_id}.png"
+    upload_image(img_path, src_img)
     return False, img_id
 
 
-def extract_faces_and_compare(img_path, img_id, facelib_path):
-
-    face_objs = DeepFace.extract_faces(img_path=img_path)
+def extract_faces_and_compare(img_bytes, img_name, folder_path):
+    # Extract faces
+    nparr = np.frombuffer(img_bytes, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    face_objs = DeepFace.extract_faces(img_path=img)
     results = []
 
     for i, face_obj in enumerate(face_objs):
-        img = cv2.imread(img_path)
         roi = img[
             face_obj["facial_area"]["y"] : face_obj["facial_area"]["y"]
             + face_obj["facial_area"]["h"],
             face_obj["facial_area"]["x"] : face_obj["facial_area"]["x"]
             + face_obj["facial_area"]["w"],
         ]
-        exist, id = face_compare(roi, facelib_path)
+
+        exist, id = face_compare(roi, folder_path)
         results.append(
             {
                 "exist": exist,
                 "id": id,
-                "img_id": img_id,
+                "img_id": img_name,
                 "face_location": [
                     face_obj["facial_area"]["x"],
                     face_obj["facial_area"]["y"],

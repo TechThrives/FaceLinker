@@ -43,9 +43,15 @@ from face import Face
 from message import Message
 from note import Note
 from verification import confirm_token
-from utils import delete_folder, remove_files_from_folder
+from utils import remove_files_from_folder, download_create_zip
 from deepface_function import extract_faces_and_compare, update_faces_collection
-
+from supabase_function import (
+    upload_image_file,
+    image_urls,
+    get_url,
+    delete_folder,
+    delete_file,
+)
 
 load_dotenv()
 
@@ -55,20 +61,6 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-def create_zip(file_list, zip_file):
-    with zipfile.ZipFile(zip_file, "w") as zipf:
-        for file in file_list:
-            zipf.write(file, os.path.basename(file))
-
-
-def delete_file(response):
-    try:
-        os.remove(zip_file)
-    except Exception as ex:
-        print(ex)
-    return response
 
 
 # Create app
@@ -147,6 +139,7 @@ def utility_processor():
     def get_user():
         user = mongo.db.users.find_one({"id": current_user.id}, {"_id": 0})
         profile = User.make_from_dict(user)
+        profile.profile_image = get_url(profile.profile_image)
         return profile
 
     return dict(get_events=get_events, get_user=get_user)
@@ -251,9 +244,9 @@ def dashboard():
     return render_template("dashboard.html")
 
 
-@app.route("/addevents", methods=["POST", "GET"])
+@app.route("/add_event", methods=["POST", "GET"])
 @login_required
-def addevents():
+def add_event():
     if request.method == "GET":
         return render_template("event_add.html")
     if request.method == "POST":
@@ -286,11 +279,9 @@ def delete_event(event_id):
         users.update_one(
             {"id": current_user.id}, {"$pull": {"events": deleted_event["_id"]}}
         )
-        delete_folder(
-            os.path.join(
-                app.config["UPLOAD_FOLDER"], str(current_user.id), str(event_id)
-            )
-        )
+
+        event_path = f"{str(current_user.id)}/{str(event_id)}"
+        delete_folder(event_path)
 
         faces = mongo.db.faces
         face_ids = deleted_event["faces"]
@@ -317,18 +308,9 @@ def view_event(event_id):
     event = events.find_one({"id": event_id})
     if event:
         event = Event.make_from_dict(event)
-        gallery_path = os.path.join(
-            app.config["UPLOAD_FOLDER"], str(current_user.id), str(event_id)
-        )
+        gallery_path = f"{str(current_user.id)}/{str(event_id)}"
 
-        if not os.path.exists(gallery_path):
-            return render_template("event_details.html", event=event)
-
-        image_files = [
-            "uploads/{}/{}/{}".format(current_user.id, event_id, f)
-            for f in os.listdir(gallery_path)
-            if os.path.isfile(os.path.join(gallery_path, f))
-        ]
+        image_files = image_urls(gallery_path)
 
         return render_template(
             "event_details.html", event=event, image_files=image_files
@@ -346,18 +328,9 @@ def event_upload(event_id):
         event = Event.make_from_dict(event)
 
         if request.method == "POST":
-            event_path = os.path.join(
-                app.config["UPLOAD_FOLDER"], str(current_user.id), str(event_id)
-            )
+            event_path = f"{str(current_user.id)}/{str(event_id)}"
 
-            facelib_path = os.path.join(
-                app.config["UPLOAD_FOLDER"],
-                str(current_user.id),
-                str(event_id),
-                "faces/",
-            )
-
-            os.makedirs(facelib_path, exist_ok=True)
+            facelib_path = f"{str(current_user.id)}/{str(event_id)}/faces"
 
             files = request.files.getlist("files")
 
@@ -366,14 +339,15 @@ def event_upload(event_id):
                     continue
 
                 if file and allowed_file(file.filename):
-                    fileext = file.filename.rsplit(".", 1)[1].lower()
+                    file_ext = file.filename.rsplit(".", 1)[1].lower()
                     file_id = str(uuid.uuid4())
+                    img_bytes = file.read()
                     # filename = secure_filename(file.filename)
-                    img_id = file_id + "." + fileext
-                    img_path = os.path.join(event_path, img_id)
-                    file.save(img_path)
-                    results = extract_faces_and_compare(img_path, img_id, facelib_path)
+                    img_id = file_id + "." + file_ext
+                    img_path = f"{event_path}/{img_id}"
+                    results = extract_faces_and_compare(img_bytes, img_id, facelib_path)
                     update_faces_collection(mongo, results, event_id)
+                    upload_image_file(img_path, img_bytes, file_ext)
 
                 else:
                     return render_template(
@@ -397,11 +371,8 @@ def faces(event_id):
     event = events.find_one({"id": event_id})
     if event:
         event = Event.make_from_dict(event)
-        face_path = os.path.join(
-            app.config["UPLOAD_FOLDER"], str(current_user.id), str(event_id), "faces"
-        )
-        if not os.path.exists(face_path):
-            return render_template("faces.html")
+
+        face_path = f"{str(current_user.id)}/{str(event_id)}/faces"
 
         image_files = {}
 
@@ -410,8 +381,8 @@ def faces(event_id):
 
         image_files = [
             {
-                "image_path": "uploads/{}/{}/faces/{}.png".format(
-                    current_user.id, event_id, face.id
+                "image_path": get_url(
+                    "{}/{}/faces/{}.png".format(current_user.id, event_id, face.id)
                 ),
                 "face_obj": face,
             }
@@ -430,17 +401,11 @@ def view_face(face_id):
     face = faces.find_one({"id": face_id})
     if face:
         face = Face.make_from_dict(face)
-        gallery_path = os.path.join(
-            app.config["UPLOAD_FOLDER"], str(current_user.id), str(face.event_id)
-        )
-
-        if not os.path.exists(gallery_path):
-            return render_template("dashboard.html")
 
         image_files = [
             {
-                "image_path": "uploads/{}/{}/{}".format(
-                    current_user.id, face.event_id, image[0]
+                "image_path": get_url(
+                    "uploads/{}/{}/{}".format(current_user.id, face.event_id, image[0])
                 ),
                 "coordinates": image[1],
             }
@@ -473,16 +438,11 @@ def face_download(face_id):
     if face:
         face = Face.make_from_dict(face)
 
-        gallery_path = os.path.join(
-            app.config["UPLOAD_FOLDER"], str(current_user.id), str(face.event_id)
-        )
-
-        if not os.path.exists(gallery_path):
-            return render_template("dashboard.html")
-
         files_to_zip = []
         for image in face.images:
-            files_to_zip.append(os.path.join(gallery_path, image[0]))
+            files_to_zip.append(
+                f"{str(current_user.id)}/{str(face.event_id)}/{image[0]}"
+            )
 
         zip_name = "{}.zip".format(face.id)
 
@@ -493,7 +453,7 @@ def face_download(face_id):
 
         remove_files_from_folder(download_path)
 
-        create_zip(files_to_zip, zip_file)
+        download_create_zip(download_path, files_to_zip, zip_file)
 
         return send_file(zip_file, as_attachment=True)
 
@@ -505,31 +465,26 @@ def profile():
     users = mongo.db.users
     user = users.find_one({"id": current_user.id})
     profile = User.make_from_dict(user)
+    profile.profile_image = get_url(profile.profile_image)
+
     if request.method == "POST":
 
-        profileimg_path = os.path.join(
-            app.config["UPLOAD_FOLDER"],
-            str(current_user.id),
-        )
-
-        os.makedirs(profileimg_path, exist_ok=True)
+        profile_img_path = f"{str(current_user.id)}"
 
         file = request.files["profileImage"]
 
         if file and file.filename != "" and allowed_file(file.filename):
-            fileext = file.filename.rsplit(".", 1)[1].lower()
-            file_id = str(current_user.id)
-            # filename = secure_filename(file.filename)
-            img_id = file_id + "." + fileext
-            img_path = os.path.join(profileimg_path, img_id)
-            profile_img = img_path
-            file.save(img_path)
+            img_bytes = file.read()
+            img_id = str(current_user.id) + ".png"
+            img_path = f"{profile_img_path}/{img_id}"
+            delete_file(img_path)
+            upload_image_file(img_path, img_bytes)
 
             users.update_one(
                 {"id": current_user.id},
                 {
                     "$set": {
-                        "profile_image": profile_img,
+                        "profile_image": img_path,
                     }
                 },
             )
@@ -574,6 +529,10 @@ def profile():
                     profile=profile,
                     msg="Password and Confirm Password Not Match.",
                 )
+
+        user = users.find_one({"id": current_user.id})
+        profile = User.make_from_dict(user)
+        profile.profile_image = get_url(profile.profile_image)
 
         return render_template(
             "profile.html",

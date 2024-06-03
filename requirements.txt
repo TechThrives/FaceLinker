@@ -12,3 +12,4 @@ deepface
 opencv-python
 numpy
 supabase
+zipfile36

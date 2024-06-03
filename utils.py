@@ -1,4 +1,6 @@
 import os
+import zipfile
+from supabase_function import download_file
 
 
 def delete_folder(folder_path):
@@ -35,3 +37,17 @@ def delete_file(file_path):
             os.remove(file_path)
     except Exception as ex:
         print(f"Error removing {file_path}: {ex}")
+
+
+def create_zip(file_list, zip_file):
+    with zipfile.ZipFile(zip_file, "w") as zipf:
+        for file in file_list:
+            zipf.write(file, os.path.basename(file))
+
+
+def download_create_zip(download_folder, file_list, zip_file):
+    with zipfile.ZipFile(zip_file, "w") as zipf:
+        for file in file_list:
+            temp_file = os.path.join(download_folder, file.split("/")[-1])
+            if download_file(temp_file, file):
+                zipf.write(temp_file, os.path.basename(temp_file))
