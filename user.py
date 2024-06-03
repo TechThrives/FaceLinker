@@ -1,15 +1,17 @@
-from datetime import datetime
 import uuid
 
 
 # User class
 class User:
-    def __init__(self, first_name, last_name, email, id="", events=[]):
+    def __init__(
+        self, first_name, last_name, email, id="", profile_image="", events=[]
+    ):
         # Main initialiser
         self.id = uuid.uuid4().hex if not id else id
         self.first_name = first_name
         self.last_name = last_name
         self.email = email
+        self.profile_image = profile_image
         self.events = events
 
     @classmethod
@@ -20,6 +22,7 @@ class User:
             d["last_name"],
             d["email"],
             d["id"],
+            d["profile_image"],
         )
 
     def dict(self):
@@ -29,6 +32,7 @@ class User:
             "first_name": self.first_name,
             "last_name": self.last_name,
             "email": self.email,
+            "profile_image": self.profile_image,
             "events": self.events,
         }
 

@@ -33,7 +33,7 @@
         />
       </svg>
 
-      <span class="mx-2 text-2xl font-semibold text-white">Dashboard</span>
+      <span class="mx-2 text-2xl font-semibold text-white">FaceLinker</span>
     </div>
   </div>
 
@@ -86,6 +86,29 @@
       </svg>
 
       <span class="mx-3">Add Event</span>
+    </a>
+
+    <a
+      class="flex items-center px-6 py-2 mt-4 {{ 'bg-gray-700 bg-opacity-25 text-gray-100' if active_page == 'allevent' else 'text-gray-500' }} hover:bg-gray-700 hover:bg-opacity-25 hover:text-gray-100"
+      href="/events"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="w-6 h-6"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M21.5 12H16c-.7 2-2 3-4 3s-3.3-1-4-3H2.5" />
+        <path
+          d="M5.5 5.1L2 12v6c0 1.1.9 2 2 2h16a2 2 0 002-2v-6l-3.4-6.9A2 2 0 0016.8 4H7.2a2 2 0 00-1.8 1.1z"
+        />
+      </svg>
+
+      <span class="mx-3">All Events</span>
     </a>
 
     <a
@@ -147,6 +170,80 @@
       {% for event in get_events() %}
       <a
         href="{{ url_for('view_event', event_id=event.id) }}"
+        class="flex items-center pl-8 px-6 py-2 mt-2 text-gray-500 hover:text-gray-100 hover:bg-gray-700 hover:bg-opacity-25"
+      >
+        <svg
+          class="w-4 h-4"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="currentColor"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <circle cx="15" cy="12" r="6" />
+        </svg>
+
+        <span class="mx-3">{{ event.title }}</span> </a
+      >{% endfor %}
+    </div>
+
+    <a
+      class="flex items-center px-6 py-2 mt-4 {{ 'bg-gray-700 bg-opacity-25 text-gray-100' if active_page == 'face' else 'text-gray-500' }} hover:bg-gray-700 hover:bg-opacity-25 hover:text-gray-100"
+      href="#"
+      @click.prevent="faceToggle"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="w-6 h-6"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+      </svg>
+
+      <span class="mx-3">Faces in Event</span>
+
+      <span class="ml-auto">
+        <svg
+          x-show="!faceOpen"
+          class="w-4 h-4"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+        <svg
+          x-show="faceOpen"
+          class="w-4 h-4"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M5 15l7-7 7 7"
+          />
+        </svg>
+      </span>
+    </a>
+    <div x-show="faceOpen">
+      {% for event in get_events() %}
+      <a
+        href="{{ url_for('faces', event_id=event.id) }}"
         class="flex items-center pl-8 px-6 py-2 mt-2 text-gray-500 hover:text-gray-100 hover:bg-gray-700 hover:bg-opacity-25"
       >
         <svg

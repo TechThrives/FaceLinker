@@ -1,139 +1,228 @@
-{% extends "base.html" %} {% block body %}
-<h3 class="text-gray-700 text-3xl font-semibold">Forms</h3>
-
-<div class="mt-4">
-  <h4 class="text-gray-600">Model Form</h4>
-
-  <div class="mt-4">
-    <div
-      class="max-w-sm w-full bg-white shadow-md rounded-md overflow-hidden border"
+{% extends "base.html" %} {% block sidebar %} {% include "layout/sidebar.html"
+%} {% endblock %} {% block header %} {% include "layout/header.html" %} {%
+endblock %} {% block body %}
+<div class="flex flex-col h-screen flex-wrap items-center justify-center">
+  <div
+    id="toast-success"
+    class="flex text-center w-full max-w-xs p-4 mb-4 text-gray-500 bg-white rounded-lg shadow {% if not msg %} hidden {% endif %}"
+    role="alert"
+  >
+    <p class="text-sm mx-auto">{{msg}}</p>
+    <button
+      type="button"
+      class="ms-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex items-center justify-center h-8 w-8"
+      aria-label="Close"
+      id="close-toast"
     >
-      <form>
-        <div
-          class="flex justify-between items-center px-5 py-3 text-gray-700 border-b"
+      <span class="sr-only">Close</span>
+      <svg
+        class="w-3 h-3"
+        aria-hidden="true"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 14 14"
+      >
+        <path
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
+        />
+      </svg>
+    </button>
+  </div>
+  <div
+    class="container lg:w-2/6 xl:w-2/7 sm:w-full md:w-2/3 bg-white shadow-lg transform duration-200 easy-in-out"
+    id="profileSection"
+  >
+    <div class="h-32 overflow-hidden">
+      <img
+        class="w-full"
+        src="https://images.unsplash.com/photo-1605379399642-870262d3d051?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=2000&q=80"
+        alt=""
+      />
+    </div>
+    <div class="flex justify-center px-5 -mt-12">
+      <div class="h-32 w-32 bg-white p-2 rounded-full cursor-pointer">
+        <img
+          class="h-full w-full object-cover rounded-full"
+          src="{{ profile.profile_image }}"
+          alt="Profile Image"
+        />
+      </div>
+    </div>
+    <div>
+      <div class="text-center px-14">
+        <h2 class="text-gray-800 text-3xl font-bold" id="name">
+          {{profile.first_name}} {{profile.last_name}}
+        </h2>
+        <p class="text-gray-400 mt-2 hover:text-blue-500">{{profile.email}}</p>
+        <p class="mt-2 text-gray-500 text-sm">
+          Lorem Ipsum is simply dummy text of the printing and typesetting
+          industry. Lorem Ipsum has been the industry's standard dummy text ever
+          since the 1500s,
+        </p>
+      </div>
+      <hr class="mt-6" />
+      <input
+        type="button"
+        class="bg-gray-50 w-full text-center p-4 hover:bg-blue-200 cursor-pointer"
+        id="editBtn"
+        value="Edit"
+      />
+    </div>
+  </div>
+
+  <!--Edit-->
+  <div
+    class="container lg:w-2/6 xl:w-2/7 sm:w-full md:w-2/3 bg-white shadow-lg transform duration-200 easy-in-out hidden"
+    id="editSection"
+  >
+    <div class="h-32 overflow-hidden">
+      <img
+        class="w-full"
+        src="https://images.unsplash.com/photo-1605379399642-870262d3d051?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=2000&q=80"
+        alt=""
+      />
+    </div>
+    <form id="editProfileForm" method="post" enctype="multipart/form-data">
+      <div class="flex justify-center px-5 -mt-12">
+        <label
+          for="profileImage"
+          class="h-32 w-32 bg-white p-2 rounded-full cursor-pointer"
         >
-          <h3 class="text-sm">Add Category</h3>
-          <button>
-            <svg
-              class="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+          <input
+            type="file"
+            id="profileImage"
+            name="profileImage"
+            class="hidden"
+            accept="image/*"
+          />
+          <img
+            id="profileImagePreview"
+            class="h-full w-full object-cover rounded-full hover:scale-105"
+            src="{{ profile.profile_image }}"
+            alt="Profile Image"
+          />
+        </label>
+      </div>
+      <div class="mt-4">
+        <div class="grid gap-6 mb-6 md:grid-cols-2 mx-4">
+          <div>
+            <label
+              for="first_name"
+              class="block mb-2 text-sm font-medium text-gray-900"
+              >First name</label
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-
-        <div class="px-5 py-6 bg-gray-200 text-gray-700 border-b">
-          <label class="text-xs">Name</label>
-
-          <div class="mt-2 relative rounded-md shadow-sm">
-            <span
-              class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-600"
-            >
-              <svg
-                class="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"
-                />
-              </svg>
-            </span>
-
             <input
               type="text"
-              class="form-input w-full px-12 py-2 appearance-none rounded-md focus:border-indigo-600"
+              id="first_name"
+              name="first_name"
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+              value="{{profile.first_name}}"
             />
           </div>
-        </div>
-
-        <div class="flex justify-between items-center px-5 py-3">
-          <button
-            class="px-3 py-1 text-gray-700 text-sm rounded-md bg-gray-200 hover:bg-gray-300 focus:outline-none"
-          >
-            Cancel
-          </button>
-          <button
-            class="px-3 py-1 bg-indigo-600 text-white rounded-md text-sm hover:bg-indigo-500 focus:outline-none"
-          >
-            Save
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<div class="mt-8">
-  <h4 class="text-gray-600">Forms</h4>
-
-  <div class="mt-4">
-    <div class="p-6 bg-white rounded-md shadow-md">
-      <h2 class="text-lg text-gray-700 font-semibold capitalize">
-        Account settings
-      </h2>
-
-      <form>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-4">
           <div>
-            <label class="text-gray-700" for="username">Username</label>
+            <label
+              for="last_name"
+              class="block mb-2 text-sm font-medium text-gray-900"
+              >Last name</label
+            >
             <input
-              class="form-input w-full mt-2 rounded-md focus:border-indigo-600"
               type="text"
+              id="last_name"
+              name="last_name"
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+              value="{{profile.last_name}}"
+              required
             />
           </div>
-
           <div>
-            <label class="text-gray-700" for="emailAddress"
-              >Email Address</label
+            <label
+              for="password"
+              class="block mb-2 text-sm font-medium text-gray-900"
+              >Password</label
             >
             <input
-              class="form-input w-full mt-2 rounded-md focus:border-indigo-600"
-              type="email"
-            />
-          </div>
-
-          <div>
-            <label class="text-gray-700" for="password">Password</label>
-            <input
-              class="form-input w-full mt-2 rounded-md focus:border-indigo-600"
               type="password"
+              id="password"
+              name="password"
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
             />
           </div>
-
           <div>
-            <label class="text-gray-700" for="passwordConfirmation"
-              >Password Confirmation</label
+            <label
+              for="confirm_password"
+              class="block mb-2 text-sm font-medium text-gray-900"
+              >Confirm Password</label
             >
             <input
-              class="form-input w-full mt-2 rounded-md focus:border-indigo-600"
               type="password"
+              id="confirm_password"
+              name="confirm_password"
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
             />
           </div>
         </div>
+        <input
+          type="hidden"
+          id="csrf_token"
+          name="csrf_token"
+          value="{{ csrf_token() }}"
+        />
+        <hr class="mt-6" />
 
-        <div class="flex justify-end mt-4">
-          <button
-            class="px-4 py-2 bg-gray-800 text-gray-200 rounded-md hover:bg-gray-700 focus:outline-none focus:bg-gray-700"
-          >
-            Save
-          </button>
+        <div class="flex bg-gray-50">
+          <div class="text-center w-1/2 p-4 hover:bg-blue-200 cursor-pointer">
+            <div id="backBtn">Back</div>
+          </div>
+          <div class="border"></div>
+          <div class="text-center w-1/2 p-4 hover:bg-blue-200 cursor-pointer">
+            <button type="submit">Update</button>
+          </div>
         </div>
-      </form>
-    </div>
+      </div>
+    </form>
   </div>
 </div>
+<script>
+  const closetoast = document.getElementById("close-toast"),
+    toast = document.getElementById("toast-success");
 
+  closetoast.onclick = (e) => {
+    toast.classList.add("hidden");
+  };
+
+  //Edit Button
+  document.getElementById("editBtn").addEventListener("click", function () {
+    document.getElementById("editSection").classList.remove("hidden");
+    document.getElementById("profileSection").classList.add("hidden");
+  });
+
+  //Back Btn
+  document.getElementById("backBtn").addEventListener("click", function () {
+    document.getElementById("profileSection").classList.remove("hidden");
+    document.getElementById("editSection").classList.add("hidden");
+  });
+
+  //Prewiew Profile Image
+  function updatePreviewImage(input) {
+    if (input.files && input.files[0]) {
+      var reader = new FileReader();
+
+      reader.onload = function (e) {
+        document.getElementById("profileImagePreview").src = e.target.result;
+      };
+
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  document
+    .getElementById("profileImage")
+    .addEventListener("change", function (event) {
+      updatePreviewImage(event.target);
+    });
+</script>
 {% endblock %}

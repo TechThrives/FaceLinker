@@ -1,4 +1,4 @@
-{% set active_page = "event" %}{% extends "base.html" %} {% block sidebar %} {%
+{% set active_page = "face" %}{% extends "base.html" %} {% block sidebar %} {%
 include "layout/sidebar.html" %} {% endblock %} {% block header %} {% include
 "layout/header.html "%} {% endblock %} {% block body %}
 <div class="flex flex-wrap -mx-3 mb-5">
@@ -6,19 +6,9 @@ include "layout/sidebar.html" %} {% endblock %} {% block header %} {% include
     <div
       class="relative flex-[1_auto] flex flex-col break-words min-w-0 bg-clip-border rounded-xl border border-dashed border-stone-200 bg-white m-5"
     >
-      <div class="flex-col mx-auto mt-4 max-w-md text-gray-800 text-center">
-        <h2 class="text-xl font-bold text-gray-900 sm:text-3xl">
-          {{event.title}}
-        </h2>
-        <p class="text-lg font-bold">{{event.location}}</p>
-        <p class="py-1 text-sm">{{event.desc}}</p>
-        <p>Start Date :{{event.start}}</p>
-        <p>End Date :{{event.end}}</p>
-      </div>
-
       <div class="text-center pb-8">
         <h2 class="text-xl my-4 font-bold text-gray-900 sm:text-3xl">
-          Your Uploads
+          Images for {{face.name}}
         </h2>
         <div class="p-5 sm:p-8">
           <div
@@ -29,9 +19,10 @@ include "layout/sidebar.html" %} {% endblock %} {% block header %} {% include
             <div class="overflow-hidden rounded-lg">
               <img
                 class="h-auto max-w-full rounded-lg hover:scale-110 transition ease-in-out hover:shadow-2x hover:cursor-zoom-in"
-                src="{{ url_for('static', filename=image_file) }}"
+                src="{{ url_for('static', filename=image_file.image_path) }}"
                 alt="Image"
               />
+              <input hidden type="text" value="{{image_file.coordinates}}" />
             </div>
             {% endfor %}
           </div>
@@ -39,10 +30,10 @@ include "layout/sidebar.html" %} {% endblock %} {% block header %} {% include
 
         <div class="fixed bottom-8 right-1 transform -translate-x-1/2">
           <a
-            class="text-white py-2 px-4 shadow-lg bg-indigo-600 rounded-md w-full text-md hover:bg-indigo-500"
-            href="{{ url_for('event_upload', event_id=event.id) }}"
+            class="text-white font-bold py-2 px-4 shadow-lg bg-indigo-600 rounded-md w-full text-md hover:bg-indigo-500"
+            href="{{ url_for('face_download', face_id=face.id) }}"
           >
-            Add Images
+            Download All
           </a>
         </div>
       </div>
@@ -63,18 +54,52 @@ include "layout/sidebar.html" %} {% endblock %} {% block header %} {% include
   >
 
   <!-- A big image will be displayed here -->
-  <img id="modal-img" class="max-w-[800px] max-h-[600px] object-cover" />
+  <canvas id="canvas-img" class="object-cover"></canvas>
 </div>
 
 <script>
-  // Get the modal by id
   const modal = document.getElementById("modal"),
-    modalImg = document.getElementById("modal-img");
+    canvasImg = document.getElementById("canvas-img");
   var imageGallery = document.getElementById("imageGallery");
+  var context = canvasImg.getContext("2d");
+
+  var img = new Image();
 
   imageGallery.onclick = ({ target }) => {
     modal.classList.remove("hidden");
-    modalImg.src = target.src;
+
+    img.src = target.src;
+    var originalWidth = img.naturalWidth;
+    var originalHeight = img.naturalHeight;
+
+    var maxWidth = 800;
+    var maxHeight = 500;
+
+    canvasImg.height = maxHeight;
+    canvasImg.width = maxWidth;
+
+    // Calculate scaling factors
+    var widthScale = maxWidth / originalWidth;
+    var heightScale = maxHeight / originalHeight;
+
+    var siblingInput = target.nextElementSibling;
+    var inputValue = siblingInput.value;
+
+    var inputValue = inputValue;
+    var [x, y, w, h] = JSON.parse(inputValue);
+
+    // Map coordinates and dimensions to the new image
+    var newX = x * widthScale;
+    var newY = y * heightScale;
+    var newW = w * widthScale;
+    var newH = h * heightScale;
+
+    context.drawImage(target, 0, 0, maxWidth, maxHeight);
+    context.beginPath();
+    context.rect(newX, newY, newW, newH);
+    context.lineWidth = 1;
+    context.strokeStyle = "red";
+    context.stroke();
   };
 
   function closeModal() {

@@ -1,7 +1,17 @@
 # MODULE IMPORTS
 
 # Flask modules
-from flask import Flask, render_template, request, url_for, request, redirect, abort
+from flask import (
+    Flask,
+    render_template,
+    send_file,
+    request,
+    url_for,
+    request,
+    redirect,
+    abort,
+    jsonify,
+)
 from flask_login import (
     LoginManager,
     login_user,
@@ -21,27 +31,44 @@ from urllib.parse import urlparse, urljoin
 from datetime import datetime
 import configparser
 import json
+import uuid
 import sys
 import os
+import zipfile
 
 # Local imports
 from user import User, Anonymous
 from event import Event
+from face import Face
 from message import Message
 from note import Note
 from verification import confirm_token
-from utils import delete_folder
+from utils import delete_folder, remove_files_from_folder
 from deepface_function import extract_faces_and_compare, update_faces_collection
 
 
 load_dotenv()
 
-UPLOAD_FOLDER = "static/uploads"
+UPLOAD_FOLDER = os.path.join("static", "uploads")
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def create_zip(file_list, zip_file):
+    with zipfile.ZipFile(zip_file, "w") as zipf:
+        for file in file_list:
+            zipf.write(file, os.path.basename(file))
+
+
+def delete_file(response):
+    try:
+        os.remove(zip_file)
+    except Exception as ex:
+        print(ex)
+    return response
 
 
 # Create app
@@ -52,7 +79,6 @@ app.config["SECURITY_PASSWORD_SALT"] = os.getenv("SECURITY_PASSWORD_SALT")
 # app.config["MONGO_DBNAME"] = "facelinker"
 app.config["MONGO_URI"] = os.getenv("MONGO_URI")
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-
 
 # Create Pymongo
 mongo = PyMongo(app)
@@ -70,10 +96,7 @@ csp = {
         "'unsafe-inline'",
         "'unsafe-eval'",
     ],
-    "img-src": [
-        "*",
-        "worker-src blob:",
-    ],
+    "img-src": ["*", "worker-src blob:", "data:"],
     "worker-src": ["blob:"],
 }
 talisman = Talisman(app, content_security_policy=csp)
@@ -104,16 +127,29 @@ def utility_processor():
                         "as": "eventDetails",
                     }
                 },
-                {"$project": {"eventDetails._id": 0}},
+                {"$unwind": "$eventDetails"},
+                {
+                    "$lookup": {
+                        "from": "faces",
+                        "localField": "eventDetails.faces",
+                        "foreignField": "_id",
+                        "as": "eventDetails.faces",
+                    }
+                },
+                {"$group": {"_id": "$_id", "eventDetails": {"$push": "$eventDetails"}}},
+                {"$project": {"_id": 0}},
             ]
         )
-
-        user_events_details = (
-            list(user_events)[0]["eventDetails"] if user_events else []
-        )
+        all_event = list(user_events)
+        user_events_details = all_event[0]["eventDetails"] if len(all_event) else []
         return user_events_details
 
-    return dict(get_events=get_events)
+    def get_user():
+        user = mongo.db.users.find_one({"id": current_user.id}, {"_id": 0})
+        profile = User.make_from_dict(user)
+        return profile
+
+    return dict(get_events=get_events, get_user=get_user)
 
 
 # ROUTES
@@ -289,7 +325,7 @@ def view_event(event_id):
             return render_template("event_details.html", event=event)
 
         image_files = [
-            "uploads" + "/" + str(current_user.id) + "/" + str(event_id) + "/" + str(f)
+            "uploads/{}/{}/{}".format(current_user.id, event_id, f)
             for f in os.listdir(gallery_path)
             if os.path.isfile(os.path.join(gallery_path, f))
         ]
@@ -330,10 +366,13 @@ def event_upload(event_id):
                     continue
 
                 if file and allowed_file(file.filename):
-                    filename = secure_filename(file.filename)
-                    file_path = os.path.join(event_path, filename)
-                    file.save(file_path)
-                    results = extract_faces_and_compare(file_path, facelib_path)
+                    fileext = file.filename.rsplit(".", 1)[1].lower()
+                    file_id = str(uuid.uuid4())
+                    # filename = secure_filename(file.filename)
+                    img_id = file_id + "." + fileext
+                    img_path = os.path.join(event_path, img_id)
+                    file.save(img_path)
+                    results = extract_faces_and_compare(img_path, img_id, facelib_path)
                     update_faces_collection(mongo, results, event_id)
 
                 else:
@@ -354,35 +393,195 @@ def event_upload(event_id):
 @login_required
 def faces(event_id):
     faces = mongo.db.faces
-    face_path = os.path.join(
-        app.config["UPLOAD_FOLDER"], str(current_user.id), str(event_id), "faces"
-    )
-    if not os.path.exists(face_path):
-        return render_template("faces.html")
+    events = mongo.db.events
+    event = events.find_one({"id": event_id})
+    if event:
+        event = Event.make_from_dict(event)
+        face_path = os.path.join(
+            app.config["UPLOAD_FOLDER"], str(current_user.id), str(event_id), "faces"
+        )
+        if not os.path.exists(face_path):
+            return render_template("faces.html")
 
-    image_files = {}
-    for f in os.listdir(face_path):
-        if os.path.isfile(os.path.join(face_path, f)):
-            face_object = faces.find_one({"id": f.split(".")[0]})
-            image_files[f.split(".")[0]] = [
-                "uploads"
-                + "/"
-                + str(current_user.id)
-                + "/"
-                + str(event_id)
-                + "/faces/"
-                + str(f),
-                face_object,
-            ]
+        image_files = {}
 
-    return render_template("faces.html", image_files=image_files)
+        face_object = faces.find({"event_id": event_id})
+        face_object = list(face_object)
+
+        image_files = [
+            {
+                "image_path": "uploads/{}/{}/faces/{}.png".format(
+                    current_user.id, event_id, face.id
+                ),
+                "face_obj": face,
+            }
+            for face in [Face.make_from_dict(face) for face in face_object]
+        ]
+
+        return render_template("faces.html", image_files=image_files, event=event)
+
+    return redirect(url_for("dashboard"))
+
+
+@app.route("/face/<face_id>", methods=["GET"])
+@login_required
+def view_face(face_id):
+    faces = mongo.db.faces
+    face = faces.find_one({"id": face_id})
+    if face:
+        face = Face.make_from_dict(face)
+        gallery_path = os.path.join(
+            app.config["UPLOAD_FOLDER"], str(current_user.id), str(face.event_id)
+        )
+
+        if not os.path.exists(gallery_path):
+            return render_template("dashboard.html")
+
+        image_files = [
+            {
+                "image_path": "uploads/{}/{}/{}".format(
+                    current_user.id, face.event_id, image[0]
+                ),
+                "coordinates": image[1],
+            }
+            for image in face.images
+        ]
+
+        return render_template("face_details.html", face=face, image_files=image_files)
+
+    return redirect(url_for("dashboard"))
+
+
+@app.route("/update_name", methods=["POST"])
+def update_name():
+    new_name = request.form["name"]
+    face_id = request.form["face_id"]
+
+    # Save the updated face document back to the database
+    if mongo.db.faces.update_one({"id": face_id}, {"$set": {"name": new_name}}):
+        return jsonify({"status": "success", "message": "Name updated successfully"})
+    else:
+        return jsonify({"status": "error", "message": "Face not found"})
+
+
+# download images
+@app.route("/download/<face_id>", methods=["GET"])
+@login_required
+def face_download(face_id):
+    faces = mongo.db.faces
+    face = faces.find_one({"id": face_id})
+    if face:
+        face = Face.make_from_dict(face)
+
+        gallery_path = os.path.join(
+            app.config["UPLOAD_FOLDER"], str(current_user.id), str(face.event_id)
+        )
+
+        if not os.path.exists(gallery_path):
+            return render_template("dashboard.html")
+
+        files_to_zip = []
+        for image in face.images:
+            files_to_zip.append(os.path.join(gallery_path, image[0]))
+
+        zip_name = "{}.zip".format(face.id)
+
+        download_path = os.path.join("static", "downloads")
+        os.makedirs(download_path, exist_ok=True)
+
+        zip_file = os.path.join(download_path, zip_name)
+
+        remove_files_from_folder(download_path)
+
+        create_zip(files_to_zip, zip_file)
+
+        return send_file(zip_file, as_attachment=True)
 
 
 # Profile
-@app.route("/profile", methods=["GET"])
+@app.route("/profile", methods=["GET", "POST"])
 @login_required
 def profile():
-    return render_template("profile.html")
+    users = mongo.db.users
+    user = users.find_one({"id": current_user.id})
+    profile = User.make_from_dict(user)
+    if request.method == "POST":
+
+        profileimg_path = os.path.join(
+            app.config["UPLOAD_FOLDER"],
+            str(current_user.id),
+        )
+
+        os.makedirs(profileimg_path, exist_ok=True)
+
+        file = request.files["profileImage"]
+
+        if file and file.filename != "" and allowed_file(file.filename):
+            fileext = file.filename.rsplit(".", 1)[1].lower()
+            file_id = str(current_user.id)
+            # filename = secure_filename(file.filename)
+            img_id = file_id + "." + fileext
+            img_path = os.path.join(profileimg_path, img_id)
+            profile_img = img_path
+            file.save(img_path)
+
+            users.update_one(
+                {"id": current_user.id},
+                {
+                    "$set": {
+                        "profile_image": profile_img,
+                    }
+                },
+            )
+
+        first_name = request.form["first_name"].strip()
+        last_name = request.form["last_name"].strip()
+
+        if first_name != "" and last_name != "":
+            users.update_one(
+                {"id": current_user.id},
+                {
+                    "$set": {
+                        "first_name": first_name,
+                        "last_name": last_name,
+                    }
+                },
+            )
+        else:
+            return render_template(
+                "profile.html",
+                profile=profile,
+                msg="First Name and Last Name Must Not Empty.",
+            )
+
+        password = request.form["password"].strip()
+        confirm_password = request.form["confirm_password"].strip()
+
+        if password != "" or confirm_password != "":
+            if password == confirm_password:
+                hashpass = bc.generate_password_hash(password).decode("utf-8")
+                users.update_one(
+                    {"id": current_user.id},
+                    {
+                        "$set": {
+                            "password": hashpass,
+                        }
+                    },
+                )
+            else:
+                return render_template(
+                    "profile.html",
+                    profile=profile,
+                    msg="Password and Confirm Password Not Match.",
+                )
+
+        return render_template(
+            "profile.html",
+            profile=profile,
+            msg="Profile Updated Successfully.",
+        )
+
+    return render_template("profile.html", profile=profile)
 
 
 # Logout

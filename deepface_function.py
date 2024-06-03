@@ -25,7 +25,7 @@ def face_compare(src_img, facelib_path):
     return False, img_id
 
 
-def extract_faces_and_compare(img_path, facelib_path):
+def extract_faces_and_compare(img_path, img_id, facelib_path):
 
     face_objs = DeepFace.extract_faces(img_path=img_path)
     results = []
@@ -39,7 +39,19 @@ def extract_faces_and_compare(img_path, facelib_path):
             + face_obj["facial_area"]["w"],
         ]
         exist, id = face_compare(roi, facelib_path)
-        results.append({"exist": exist, "id": id, "img_path": img_path})
+        results.append(
+            {
+                "exist": exist,
+                "id": id,
+                "img_id": img_id,
+                "face_location": [
+                    face_obj["facial_area"]["x"],
+                    face_obj["facial_area"]["y"],
+                    face_obj["facial_area"]["w"],
+                    face_obj["facial_area"]["h"],
+                ],
+            }
+        )
 
     return results
 
@@ -50,16 +62,20 @@ def update_faces_collection(mongo, results, event_id):
     for result in results:
 
         face_id = result["id"]
-        image_path = result["img_path"]
+        img_id = result["img_id"]
+        face_location = result["face_location"]
         exist = result["exist"]
 
         if exist:
-            faces.update_one({"id": face_id}, {"$push": {"images": image_path}})
+            faces.update_one(
+                {"id": face_id}, {"$push": {"images": [img_id, face_location]}}
+            )
         else:
             new_face = {
                 "id": face_id,
+                "event_id": event_id,
                 "name": "unknown",
-                "images": [image_path],
+                "images": [[img_id, face_location]],
             }
             inserted_face = faces.insert_one(new_face)
 

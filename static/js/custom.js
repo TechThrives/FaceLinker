@@ -22,6 +22,10 @@ if (getCookie("eventMenu") == null) {
   setCookie("eventMenu", "false");
 }
 
+if (getCookie("faceMenu") == null) {
+  setCookie("faceMenu", "false");
+}
+
 document.addEventListener("alpine:init", () => {
   Alpine.data("eventMenu", () => ({
     eventOpen: getCookie("eventMenu"),
@@ -29,6 +33,12 @@ document.addEventListener("alpine:init", () => {
       this.eventOpen = !this.eventOpen;
       setCookie("eventMenu", this.eventOpen);
       console.log(this.eventOpen);
+    },
+    faceOpen: getCookie("faceMenu"),
+    faceToggle() {
+      this.faceOpen = !this.faceOpen;
+      setCookie("faceMenu", this.faceOpen);
+      console.log(this.faceOpen);
     },
   }));
 });
@@ -53,4 +63,22 @@ document.addEventListener("DOMContentLoaded", () => {
   //     );
   //   }
   // });
+
+  $(".nameInput").on("focusout", function () {
+    var newName = $(this).val();
+    var faceId = $(this).data("face-id"); // Retrieve the face ID from the data attribute
+    var csrfToken = $(this).data("csrf-token"); // Retrieve the face ID from the data attribute
+    console.log(newName, faceId);
+    $.ajax({
+      type: "POST",
+      url: "/update_name",
+      data: { name: newName, face_id: faceId, csrf_token: csrfToken }, // Send both the new name and the face ID to the server
+      success: function (response) {
+        console.log(response);
+      },
+      error: function (error) {
+        console.log(error);
+      },
+    });
+  });
 });

@@ -18,7 +18,6 @@ def delete_folder(folder_path):
 
 
 def remove_files_from_folder(folder_path):
-
     files = os.listdir(folder_path)
 
     for file in files:
@@ -26,6 +25,13 @@ def remove_files_from_folder(folder_path):
         try:
             if os.path.isfile(file_path):
                 os.remove(file_path)
-                # print(f"Removed: {file_path}")
         except Exception as e:
             print(f"Error removing {file_path}: {e}")
+
+
+def delete_file(file_path):
+    try:
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+    except Exception as ex:
+        print(f"Error removing {file_path}: {ex}")
