@@ -405,7 +405,7 @@ def view_face(face_id):
         image_files = [
             {
                 "image_path": get_url(
-                    "uploads/{}/{}/{}".format(current_user.id, face.event_id, image[0])
+                    "{}/{}/{}".format(current_user.id, face.event_id, image[0])
                 ),
                 "coordinates": image[1],
             }

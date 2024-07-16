@@ -69,37 +69,63 @@ include "layout/sidebar.html" %} {% endblock %} {% block header %} {% include
     modal.classList.remove("hidden");
 
     img.src = target.src;
-    var originalWidth = img.naturalWidth;
-    var originalHeight = img.naturalHeight;
+    img.onload = function () {
+      var originalWidth = img.naturalWidth;
+      var originalHeight = img.naturalHeight;
 
-    var maxWidth = 800;
-    var maxHeight = 500;
+      var maxWidth = 800;
+      var maxHeight = 500;
 
-    canvasImg.height = maxHeight;
-    canvasImg.width = maxWidth;
+      // Calculate aspect ratio
+      var aspectRatio = originalWidth / originalHeight;
 
-    // Calculate scaling factors
-    var widthScale = maxWidth / originalWidth;
-    var heightScale = maxHeight / originalHeight;
+      // Determine the new dimensions while maintaining aspect ratio
+      var newWidth = maxWidth;
+      var newHeight = maxHeight;
 
-    var siblingInput = target.nextElementSibling;
-    var inputValue = siblingInput.value;
+      if (originalWidth > originalHeight) {
+        newHeight = maxWidth / aspectRatio;
+        if (newHeight > maxHeight) {
+          newHeight = maxHeight;
+          newWidth = maxHeight * aspectRatio;
+        }
+      } else {
+        newWidth = maxHeight * aspectRatio;
+        if (newWidth > maxWidth) {
+          newWidth = maxWidth;
+          newHeight = maxWidth / aspectRatio;
+        }
+      }
 
-    var inputValue = inputValue;
-    var [x, y, w, h] = JSON.parse(inputValue);
+      // Set canvas dimensions to the new dimensions
+      canvasImg.width = newWidth;
+      canvasImg.height = newHeight;
 
-    // Map coordinates and dimensions to the new image
-    var newX = x * widthScale;
-    var newY = y * heightScale;
-    var newW = w * widthScale;
-    var newH = h * heightScale;
+      // Draw the image on the canvas with the correct scaling
+      context.drawImage(img, 0, 0, newWidth, newHeight);
 
-    context.drawImage(target, 0, 0, maxWidth, maxHeight);
-    context.beginPath();
-    context.rect(newX, newY, newW, newH);
-    context.lineWidth = 1;
-    context.strokeStyle = "red";
-    context.stroke();
+      // Retrieve the coordinates from the sibling input
+      var siblingInput = target.nextElementSibling;
+      var inputValue = siblingInput.value;
+      var [x, y, w, h] = JSON.parse(inputValue);
+
+      // Calculate scaling factors based on the new image dimensions
+      var widthScale = newWidth / originalWidth;
+      var heightScale = newHeight / originalHeight;
+
+      // Map coordinates and dimensions to the new image
+      var newX = x * widthScale;
+      var newY = y * heightScale;
+      var newW = w * widthScale;
+      var newH = h * heightScale;
+
+      // Draw the rectangle on the canvas
+      context.beginPath();
+      context.rect(newX, newY, newW, newH);
+      context.lineWidth = 1;
+      context.strokeStyle = "red";
+      context.stroke();
+    };
   };
 
   function closeModal() {

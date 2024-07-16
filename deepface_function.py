@@ -11,8 +11,9 @@ def face_compare(src_img, folder_path):
     image_files = list_images(folder_path)
     for image_file in image_files:
         target_img = download_image(image_file)
-
-        exist = DeepFace.verify(src_img, target_img)["verified"]
+        exist = DeepFace.verify(src_img, target_img, enforce_detection=False)[
+            "verified"
+        ]
         if exist:
             img_id = os.path.basename(image_file).split(".")[0]
             return True, img_id
@@ -27,10 +28,12 @@ def extract_faces_and_compare(img_bytes, img_name, folder_path):
     # Extract faces
     nparr = np.frombuffer(img_bytes, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    face_objs = DeepFace.extract_faces(img_path=img)
+    face_objs = DeepFace.extract_faces(img_path=img, enforce_detection=False)
     results = []
 
     for i, face_obj in enumerate(face_objs):
+        if face_obj["confidence"] < 0.5:
+            continue
         roi = img[
             face_obj["facial_area"]["y"] : face_obj["facial_area"]["y"]
             + face_obj["facial_area"]["h"],
