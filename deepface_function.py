@@ -47,12 +47,12 @@ def extract_faces_and_compare(img_bytes, img_name, folder_path):
                 "exist": exist,
                 "id": id,
                 "img_id": img_name,
-                "face_location": [
-                    face_obj["facial_area"]["x"],
-                    face_obj["facial_area"]["y"],
-                    face_obj["facial_area"]["w"],
-                    face_obj["facial_area"]["h"],
-                ],
+                "face_location": {
+                    "x":face_obj["facial_area"]["x"],
+                    "y":face_obj["facial_area"]["y"],
+                    "w":face_obj["facial_area"]["w"],
+                    "h":face_obj["facial_area"]["h"],
+                },
             }
         )
 
@@ -71,14 +71,14 @@ def update_faces_collection(mongo, results, event_id):
 
         if exist:
             faces.update_one(
-                {"id": face_id}, {"$push": {"images": [img_id, face_location]}}
+                {"id": face_id}, {"$push": {"images": {"img_id": img_id, "face_location": face_location}}}
             )
         else:
             new_face = {
                 "id": face_id,
                 "event_id": event_id,
                 "name": "unknown",
-                "images": [[img_id, face_location]],
+                "images": [{"img_id": img_id, "face_location": face_location}],
             }
             inserted_face = faces.insert_one(new_face)
 

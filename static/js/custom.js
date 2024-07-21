@@ -68,13 +68,13 @@ document.addEventListener("DOMContentLoaded", () => {
     var newName = $(this).val();
     var faceId = $(this).data("face-id"); // Retrieve the face ID from the data attribute
     var csrfToken = $(this).data("csrf-token"); // Retrieve the face ID from the data attribute
-    console.log(newName, faceId);
+    
     $.ajax({
       type: "POST",
       url: "/update_name",
       data: { name: newName, face_id: faceId, csrf_token: csrfToken }, // Send both the new name and the face ID to the server
       success: function (response) {
-        console.log(response);
+        // console.log(response);
       },
       error: function (error) {
         console.log(error);

@@ -18,20 +18,18 @@ include "layout/sidebar.html" %} {% endblock %} {% block header %} {% include
           <div class="flex flex-wrap justify-center w-full">
             {% for image_file in image_files %}
             <div class="flex flex-col text-center mb-11">
-              <div class="inline-block mb-4 relative shrink-0 rounded-lg">
-                <img
-                  class="inline-block shrink-0 rounded-lg w-32 h-32"
-                  src="{{ image_file.image_path }}"
-                  alt="face image"
-                />
-              </div>
-              <div class="text-center">
-                <a
-                  href="{{ url_for('view_face', face_id=image_file.face_obj.id) }}"
-                  class="text-dark font-semibold hover:text-primary text-sm transition-colors duration-200 ease-in-out"
-                  >{{image_file.face_obj.id}}</a
+              <a
+                href="{{ url_for('view_face', face_id=image_file.face_obj.id) }}"
+                class="text-dark font-semibold hover:text-primary text-sm transition-colors duration-200 ease-in-out"
                 >
-              </div>
+                <div class="inline-block mb-4 relative shrink-0 rounded-lg">
+                  <img
+                    class="inline-block shrink-0 rounded-lg w-32 h-32"
+                    src="{{ image_file.image_path }}"
+                    alt="face image"
+                  />
+                </div>
+              </a>
               <div class="flex justify-center">
                 <input
                   class="block w-3/4 px-2.5 text-center mt-2 font-medium text-wrap nameInput"

@@ -372,8 +372,6 @@ def faces(event_id):
     if event:
         event = Event.make_from_dict(event)
 
-        face_path = f"{str(current_user.id)}/{str(event_id)}/faces"
-
         image_files = {}
 
         face_object = faces.find({"event_id": event_id})
@@ -402,15 +400,43 @@ def view_face(face_id):
     if face:
         face = Face.make_from_dict(face)
 
-        image_files = [
-            {
-                "image_path": get_url(
-                    "{}/{}/{}".format(current_user.id, face.event_id, image[0])
-                ),
-                "coordinates": image[1],
-            }
-            for image in face.images
-        ]
+        # Prepare image_files for the current face
+        image_files = []
+
+        # For each image, query for other faces in the same image
+        for image in face.images:
+            img_id = image["img_id"]
+            
+            # Find other faces in the same image
+            other_faces = faces.find({
+                "images": {"$elemMatch": {"img_id": img_id}},
+                "id": {"$ne": face_id}  # Exclude the current face
+            })
+
+            # Process other faces
+            other_faces_list = []
+            for other_face in other_faces:
+                # Construct face_data for each other face
+                for other_image in other_face['images']:
+                    if other_image['img_id'] == img_id:
+                        face_data = {
+                            'id': other_face['id'],
+                            'name': other_face['name'],
+                            'face_location': other_image['face_location']
+                        }
+                        other_faces_list.append(face_data)
+                        break  # To avoid duplicate entries
+
+            # Append image file entry with other faces
+            image_files.append({
+                "image_path": get_url("{}/{}/{}".format(current_user.id, face.event_id, img_id)),
+                "face": {
+                            'id': face.id,
+                            'name': face.name,
+                            'face_location': image['face_location']
+                        },
+                "other_faces": other_faces_list
+            })
 
         return render_template("face_details.html", face=face, image_files=image_files)
 

@@ -22,7 +22,8 @@ include "layout/sidebar.html" %} {% endblock %} {% block header %} {% include
                 src="{{ image_file.image_path }}"
                 alt="Image"
               />
-              <input hidden type="text" value="{{image_file.coordinates}}" />
+              <input hidden type="text" value="{{image_file.face}}" />
+              <input hidden type="text" value="{{image_file.other_faces}}" />
             </div>
             {% endfor %}
           </div>
@@ -65,6 +66,15 @@ include "layout/sidebar.html" %} {% endblock %} {% block header %} {% include
 
   var img = new Image();
 
+  function capitalizeWords(string) {
+    if (typeof string !== 'string') {
+        return string;
+    }
+    return string.split(' ')
+                 .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                 .join(' ');
+  }
+
   imageGallery.onclick = ({ target }) => {
     modal.classList.remove("hidden");
 
@@ -104,27 +114,48 @@ include "layout/sidebar.html" %} {% endblock %} {% block header %} {% include
       // Draw the image on the canvas with the correct scaling
       context.drawImage(img, 0, 0, newWidth, newHeight);
 
-      // Retrieve the coordinates from the sibling input
-      var siblingInput = target.nextElementSibling;
-      var inputValue = siblingInput.value;
-      var [x, y, w, h] = JSON.parse(inputValue);
+      // Retrieve the coordinates from input
+      var faceInput = target.nextElementSibling;
+      var otherFacesInput = faceInput.nextElementSibling;
+
+      // Parse the JSON string
+      var face = JSON.parse(faceInput.value.replace(/'/g, '"'));
+      var otherFaces = JSON.parse(otherFacesInput.value.replace(/'/g, '"'));
 
       // Calculate scaling factors based on the new image dimensions
       var widthScale = newWidth / originalWidth;
       var heightScale = newHeight / originalHeight;
 
       // Map coordinates and dimensions to the new image
-      var newX = x * widthScale;
-      var newY = y * heightScale;
-      var newW = w * widthScale;
-      var newH = h * heightScale;
-
-      // Draw the rectangle on the canvas
+      var {x, y, w, h} = face.face_location;
+      
+      // Draw the on the canvas
       context.beginPath();
-      context.rect(newX, newY, newW, newH);
+      
       context.lineWidth = 1;
       context.strokeStyle = "red";
+      context.rect(x * widthScale, y * heightScale, w * widthScale, h * heightScale);
       context.stroke();
+      
+      context.font = `${Math.floor(Math.min(w * widthScale / 6, h * heightScale / 6))}px cursive`;
+      context.fillStyle = "red"; 
+      context.fillText(capitalizeWords(face.name), x * widthScale, y * heightScale - 10);
+
+      // Draw other faces
+      otherFaces.forEach(({id, name, face_location}) => {
+        var {x, y, w, h} = face_location;
+        context.beginPath();
+
+        context.lineWidth = 1;
+        context.strokeStyle = "blue";
+        context.rect(x * widthScale, y * heightScale, w * widthScale, h * heightScale);
+        context.stroke();
+        
+        context.font = `${Math.floor(Math.min(w * widthScale / 6, h * heightScale / 6))}px cursive`;
+        context.fillStyle = "blue"; 
+        context.fillText(capitalizeWords(name), x * widthScale, y * heightScale - 10);
+      });
+
     };
   };
 
