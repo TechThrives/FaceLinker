@@ -28,21 +28,13 @@ from werkzeug.utils import secure_filename
 # Other modules
 from dotenv import load_dotenv
 from urllib.parse import urlparse, urljoin
-from datetime import datetime
-import configparser
-import json
 import uuid
-import sys
 import os
-import zipfile
 
 # Local imports
 from user import User, Anonymous
 from event import Event
 from face import Face
-from message import Message
-from note import Note
-from verification import confirm_token
 from utils import remove_files_from_folder, download_create_zip
 from deepface_function import extract_faces_and_compare, update_faces_collection
 from supabase_function import (

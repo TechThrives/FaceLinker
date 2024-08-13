@@ -3,16 +3,17 @@ import numpy as np
 import cv2
 from PIL import Image
 from io import BytesIO
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Initialize the Supabase client
-url: str = "https://jgjjxwofpccmpmhnklwl.supabase.co"
-key: str = (
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impnamp4d29mcGNjbXBtaG5rbHdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTc0MTg2ODMsImV4cCI6MjAzMjk5NDY4M30.n_NMtZ6ol48XLnmB7mQOJyhK1NTsIpp-OvM7u6MvRT4"
-)
+url: str = os.getenv("SUPABASE_URL")
+key: str = os.getenv("SUPABASE_KEY")
+bucket_name = os.getenv("SUPABASE_BUCKET")
+
 supabase: Client = create_client(url, key)
-
-bucket_name = "images"
-
 
 def download_image(file_name):
     response = supabase.storage.from_(bucket_name).download(file_name)
