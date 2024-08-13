@@ -77,6 +77,7 @@ csp = {
         "https://code.jquery.com",
         "https://cdnjs.cloudflare.com",
         "https://cdn.jsdelivr.net",
+        "https://cdn.tailwindcss.com",
         "'unsafe-inline'",
         "'unsafe-eval'",
     ],

@@ -1,10 +1,8 @@
 from flask import url_for, render_template
 import smtplib
 import ssl
-import configparser
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from verification import generate_confirmation_token
 import os
 
 
@@ -62,7 +60,7 @@ def send_email(receiver_email, subject, plaintext, html):
 
 # Convenience function - registration / verification email
 def send_registration_email(user):
-    token = generate_confirmation_token(user.email)
+    token = "generate_token"
     confirm_url = url_for('confirm_email', token=token, _external=True)
     subject = "Registration successful - Please verify your email address."
     plaintext = f"Welcome {user.display_name()}.\nPlease verify your email address by following this link:\n\n{confirm_url}"
