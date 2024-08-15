@@ -127,6 +127,12 @@ def utility_processor():
         )
         all_event = list(user_events)
         user_events_details = all_event[0]["eventDetails"] if len(all_event) else []
+        for event in user_events_details:
+            event_id = event['id']
+            for face in event['faces']:
+                face_id = face['id']
+                face['image_path'] = get_url("{}/{}/faces/{}.png"
+                .format(current_user.id, event_id, face_id))
         return user_events_details
 
     def get_user():

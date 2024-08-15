@@ -125,11 +125,9 @@ endblock %} {% block header %} {% include "layout/header.html" %} {% endblock %}
             <div class="my-2">
               <p class="font-semibold text-base mb-2">Peoples</p>
               <div class="flex space-x-2">
-                {% for face in event.faces[:4] %} {% set faceImage = "uploads/"
-                ~ current_user.id ~ "/" ~ event.id ~ "/faces/" ~ face.id ~
-                ".png" %}
+                {% for face in event.faces[:4] %}
                 <img
-                  src="{{ url_for('static', filename=faceImage) }}"
+                  src="{{ face.image_path }}"
                   class="w-6 h-6 rounded-full"
                 />
 
