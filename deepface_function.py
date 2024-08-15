@@ -11,7 +11,7 @@ def face_compare(src_img, folder_path):
     image_files = list_images(folder_path)
     for image_file in image_files:
         target_img = download_image(image_file)
-        exist = DeepFace.verify(src_img, target_img, enforce_detection=False, model_name="Facenet512")[
+        exist = DeepFace.verify(src_img, target_img, enforce_detection=False, model_name="ArcFace")[
             "verified"
         ]
         if exist:
