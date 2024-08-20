@@ -466,7 +466,7 @@ def face_download(face_id):
         files_to_zip = []
         for image in face.images:
             files_to_zip.append(
-                f"{str(current_user.id)}/{str(face.event_id)}/{image[0]}"
+                f"{str(current_user.id)}/{str(face.event_id)}/{image['img_id']}"
             )
 
         zip_name = "{}.zip".format(face.id)
