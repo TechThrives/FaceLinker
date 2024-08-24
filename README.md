@@ -83,6 +83,10 @@ flask run
 
 The application will be available at http://localhost:5000.
 
+## Demo
+
+https://github.com/user-attachments/assets/25b751b4-d94e-4911-b037-f293759363a0
+
 ## Contributing
 Contributions are welcome! Please follow these steps:
 
